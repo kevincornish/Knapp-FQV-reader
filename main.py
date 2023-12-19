@@ -1,6 +1,7 @@
 import pickle
 import random
 import sys
+import xml.etree.ElementTree as ET
 from PyQt5.QtWidgets import (
     QApplication,
     QPushButton,
@@ -144,25 +145,35 @@ class LoadFQV(QWidget):
             self.load_fqv(fileName)
 
     def load_fqv(self, fileName):
-        try:
-            with open(fileName, "rb") as fp:
-                self.fqv = pickle.load(fp)
-                print(f"File: {fileName} loaded!")
-            self.container_1.setValue(
-                self.fqv["inspector1_1"]
-                + self.fqv["inspector2_1"]
-                + self.fqv["inspector3_1"]
-                + self.fqv["inspector4_1"]
-                + self.fqv["inspector5_1"]
-            )
-            self.container_2.setValue(
-                self.fqv["inspector1_2"]
-                + self.fqv["inspector2_2"]
-                + self.fqv["inspector3_2"]
-                + self.fqv["inspector4_2"]
-                + self.fqv["inspector5_2"]
-            )
-        except (pickle.UnpicklingError, KeyError):
+        if fileName.endswith(".pkl"):
+            try:
+                with open(fileName, "rb") as fp:
+                    self.fqv = pickle.load(fp)
+                    print(f"File: {fileName} loaded!")
+                self.container_1.setValue(
+                    self.fqv["inspector1_1"]
+                    + self.fqv["inspector2_1"]
+                    + self.fqv["inspector3_1"]
+                    + self.fqv["inspector4_1"]
+                    + self.fqv["inspector5_1"]
+                )
+                self.container_2.setValue(
+                    self.fqv["inspector1_2"]
+                    + self.fqv["inspector2_2"]
+                    + self.fqv["inspector3_2"]
+                    + self.fqv["inspector4_2"]
+                    + self.fqv["inspector5_2"]
+                )
+            except (pickle.UnpicklingError, KeyError):
+                print("invalid FQV")
+                pass
+        elif fileName.endswith(".xml"):
+            root = ET.parse(fileName).getroot()
+            container_number = 0
+            for type_tag in root.findall("Sample/Manual"):
+                container_number += 1
+                print(type_tag.text, container_number)
+        else:
             print("invalid FQV")
             pass
 
