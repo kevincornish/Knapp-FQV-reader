@@ -141,14 +141,13 @@ class LoadFQV(QWidget):
             options=options,
         )
         if fileName:
-            print(f"File: {fileName} loaded!")
             self.load_fqv(fileName)
 
     def load_fqv(self, fileName):
         try:
             with open(fileName, "rb") as fp:
                 self.fqv = pickle.load(fp)
-                # print(self.fqv)
+                print(f"File: {fileName} loaded!")
             self.container_1.setValue(
                 self.fqv["inspector1_1"]
                 + self.fqv["inspector2_1"]
@@ -163,7 +162,7 @@ class LoadFQV(QWidget):
                 + self.fqv["inspector4_2"]
                 + self.fqv["inspector5_2"]
             )
-        except KeyError:
+        except (pickle.UnpicklingError, KeyError):
             print("invalid FQV")
             pass
 
