@@ -131,11 +131,11 @@ class LoadFQV(QMainWindow):
         self.container_box = QVBoxLayout()
         l1 = QLabel()
         self.container_box.addWidget(l1)
-        self.containers = {}
+        self.fqv_containers = {}
         for container in range(1, 251):
-            self.containers[container] = QSpinBox()
+            self.fqv_containers[container] = QSpinBox()
             self.container_box.addWidget(QLabel(f"Container {container}"))
-            self.container_box.addWidget(self.containers[container])
+            self.container_box.addWidget(self.fqv_containers[container])
         self.fqv_widget.setLayout(self.container_box)
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -172,7 +172,7 @@ class LoadFQV(QMainWindow):
                 with open(fileName, "rb") as fp:
                     self.fqv = pickle.load(fp)
                 for container in range(1, 251):
-                    self.containers[container].setValue(
+                    self.fqv_containers[container].setValue(
                         self.fqv[f"inspector1_{container}"]
                         + self.fqv[f"inspector2_{container}"]
                         + self.fqv[f"inspector3_{container}"]
@@ -190,7 +190,7 @@ class LoadFQV(QMainWindow):
                     container_number += 1
                     manual_results[f"container_{container_number}"] = int(type_tag.text)
                 for container in range(1, 251):
-                    self.containers[container].setValue(
+                    self.fqv_containers[container].setValue(
                         manual_results[f"container_{container}"]
                     )
             except(KeyError):
@@ -208,11 +208,11 @@ class LoadMachineResults(QMainWindow):
         self.container_box = QVBoxLayout()
         l1 = QLabel()
         self.container_box.addWidget(l1)
-        self.containers = {}
+        self.machine_containers = {}
         for container in range(1, 251):
-            self.containers[container] = QSpinBox()
+            self.machine_containers[container] = QSpinBox()
             self.container_box.addWidget(QLabel(f"Container {container}"))
-            self.container_box.addWidget(self.containers[container])
+            self.container_box.addWidget(self.machine_containers[container])
         self.machine_results_widget.setLayout(self.container_box)
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -246,107 +246,107 @@ class LoadMachineResults(QMainWindow):
         if fileName.endswith(".xml"):
             root = ET.parse(fileName).getroot()
             machine_results = {}
-            if "KnappRun_1_Knapp" in fileName:
+            if "KnappRun_1_" in fileName:
                 container_number = 0
                 for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
                     container_number += 1
                     machine_results[f"container_{container_number}"] = int(
                         type_tag.text
                     )
-                    self.containers[container_number].setValue(
+                    self.machine_containers[container_number].setValue(
                         machine_results[f"container_{container_number}"]
                     )
-            if "KnappRun_2_Knapp" in fileName:
+            if "KnappRun_2_" in fileName:
                 container_number = 24
                 for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
                     container_number += 1
                     machine_results[f"container_{container_number}"] = int(
                         type_tag.text
                     )
-                    self.containers[container_number].setValue(
+                    self.machine_containers[container_number].setValue(
                         machine_results[f"container_{container_number}"]
                     )
-            if "KnappRun_3_Knapp" in fileName:
+            if "KnappRun_3_" in fileName:
                 container_number = 48
                 for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
                     container_number += 1
                     machine_results[f"container_{container_number}"] = int(
                         type_tag.text
                     )
-                    self.containers[container_number].setValue(
+                    self.machine_containers[container_number].setValue(
                         machine_results[f"container_{container_number}"]
                     )
-            if "KnappRun_4_Knapp" in fileName:
+            if "KnappRun_4_" in fileName:
                 container_number = 72
                 for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
                     container_number += 1
                     machine_results[f"container_{container_number}"] = int(
                         type_tag.text
                     )
-                    self.containers[container_number].setValue(
+                    self.machine_containers[container_number].setValue(
                         machine_results[f"container_{container_number}"]
                     )
-            if "KnappRun_5_Knapp" in fileName:
+            if "KnappRun_5_" in fileName:
                 container_number = 96
                 for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
                     container_number += 1
                     machine_results[f"container_{container_number}"] = int(
                         type_tag.text
                     )
-                    self.containers[container_number].setValue(
+                    self.machine_containers[container_number].setValue(
                         machine_results[f"container_{container_number}"]
                     )
-            if "KnappRun_6_Knapp" in fileName:
+            if "KnappRun_6_" in fileName:
                 container_number = 120
                 for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
                     container_number += 1
                     machine_results[f"container_{container_number}"] = int(
                         type_tag.text
                     )
-                    self.containers[container_number].setValue(
+                    self.machine_containers[container_number].setValue(
                         machine_results[f"container_{container_number}"]
                     )
-            if "KnappRun_7_Knapp" in fileName:
+            if "KnappRun_7_" in fileName:
                 container_number = 144
                 for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
                     container_number += 1
                     machine_results[f"container_{container_number}"] = int(
                         type_tag.text
                     )
-                    self.containers[container_number].setValue(
+                    self.machine_containers[container_number].setValue(
                         machine_results[f"container_{container_number}"]
                     )
-            if "KnappRun_8_Knapp" in fileName:
+            if "KnappRun_8_" in fileName:
                 container_number = 168
                 for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
                     container_number += 1
                     machine_results[f"container_{container_number}"] = int(
                         type_tag.text
                     )
-                    self.containers[container_number].setValue(
+                    self.machine_containers[container_number].setValue(
                         machine_results[f"container_{container_number}"]
                     )
-            if "KnappRun_9_Knapp" in fileName:
+            if "KnappRun_9_" in fileName:
                 container_number = 192
                 for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
                     container_number += 1
                     machine_results[f"container_{container_number}"] = int(
                         type_tag.text
                     )
-                    self.containers[container_number].setValue(
+                    self.machine_containers[container_number].setValue(
                         machine_results[f"container_{container_number}"]
                     )
-            if "KnappRun_10_Knapp" in fileName:
+            if "KnappRun_10_" in fileName:
                 container_number = 216
                 for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
                     container_number += 1
                     machine_results[f"container_{container_number}"] = int(
                         type_tag.text
                     )
-                    self.containers[container_number].setValue(
+                    self.machine_containers[container_number].setValue(
                         machine_results[f"container_{container_number}"]
                     )
-            if "KnappRun_11_Knapp" in fileName:
+            if "KnappRun_11_" in fileName:
                 container_number = 240
                 for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
                     container_number += 1
@@ -355,7 +355,7 @@ class LoadMachineResults(QMainWindow):
                     machine_results[f"container_{container_number}"] = int(
                         type_tag.text
                     )
-                    self.containers[container_number].setValue(
+                    self.machine_containers[container_number].setValue(
                         machine_results[f"container_{container_number}"]
                     )
 
