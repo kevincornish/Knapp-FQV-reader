@@ -2,6 +2,38 @@
 
 Knapp / FQV Reader is a python application that will open pre-generated FQV or Knapp machine run files.
 
+## Knapp
+The Knapp theory, introduced by Dr. Julius Z. Knapp over two decades ago, enables an objective comparison and validation of particulate inspection techniques. This theory is grounded in the understanding that particulate inspection, whether performed by humans or automated systems, is inherently probabilistic rather than deterministic. This probabilistic nature is attributed to factors such as the size, typology, and contrast of encountered particulates.
+
+The primary objective of Knapp's theory is to establish a mathematical method for demonstrating the probability of detecting foreign particles in pharmaceutical products. It has found widespread use in assessing the efficiency of automatic inspection systems compared to traditional manual visual inspection. Recognized by the European Pharmacopoeia and the American PDA/FDA, this method serves as an effective means to calibrate fully automatic inspection systems, ensuring comparable inspection efficiency to manual systems in pharmaceutical companies.
+
+The underlying principle focuses on statistically evaluating the efficiency of rejected containers that exhibit defects of a certain statistical value, considering particles of various dimensions and types.
+
+## FQV (Factor Quality Visual)
+The FQV process involves the following steps:
+
+1. Number each container (from 1 to 250)
+2. Record the identification number for the rejected containers
+3. Select five operators with inspection capabilities equivalent to the factory's standard quality.
+4. Each operator inspects the set ten times, totaling 50 inspections per batch.
+5. After each inspection, record the rejects
+6. After 10 inspections, record the FQV for each container
+7. Calculate the number of times each container has been rejected by the five operators
+8. Calculate the FQV for each container using the formula:
+    FQV (container number. xxx) = (n/N) * 10
+    n: Number of times the container has been rejected
+    N: Total number of inspections
+    Example:
+    FQV (container number. 51) = (41/50) * 10 = 8.2
+
+The Knapp method emphasizes containers 7 to 10 for efficiency calculations. Containers with FQV categories 0 to 3 are considered good, while categories 4 to 6 constitute a grey zone, indicating instability. Ideally, the grey zone should be minimal or nonexistent.
+
+## FQA
+The FQA (Factor quality automatic) is defined by an automatic inspection system
+1. Load the Knapp batch (250 containers) on the machine. The containers will be loaded in subbatches corresponding of the number of spindles, i.e. with 40 spindles machines the containers will be loaded in order starting from the position 1 to 40, than 41 to 80, and so on. 
+2. Run inspection (usually 10 inspections per run).
+
+
 ## Installation
 
 To run the Knapp / FQV Reader, you'll need Python 3. Create new Python env
