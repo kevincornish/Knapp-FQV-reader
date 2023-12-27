@@ -185,12 +185,12 @@ class LoadFQV(QMainWindow):
                 with open(fileName, "rb") as fp:
                     self.fqv = pickle.load(fp)
                 for container in range(1, 251):
-                    self.manual_results[f"container_{container}"] = (
+                    self.manual_results[f"container_{container}"] = (round((
                         self.fqv[f"inspector1_{container}"]
                         + self.fqv[f"inspector2_{container}"]
                         + self.fqv[f"inspector3_{container}"]
                         + self.fqv[f"inspector4_{container}"]
-                        + self.fqv[f"inspector5_{container}"]
+                        + self.fqv[f"inspector5_{container}"])  / 50 * 10 )
                     )
                     self.fqv_containers[container].setValue(
                         self.manual_results[f"container_{container}"]
