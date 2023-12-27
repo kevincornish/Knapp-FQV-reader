@@ -156,7 +156,7 @@ class LoadFQV(QMainWindow):
             self,
             "Open FQV or Machine results",
             "",
-            "All Files (*);;Pickle (*.pkl)",
+            "All Files (*);;Pickle (*.pkl);;XML (*.xml)",
             options=options,
         )
 
@@ -182,16 +182,19 @@ class LoadFQV(QMainWindow):
             except (pickle.UnpicklingError, KeyError):
                 print("invalid FQV")
         elif fileName.endswith(".xml"):
-            root = ET.parse(fileName).getroot()
-            container_number = 0
-            manual_results = {}
-            for type_tag in root.findall("Sample/Manual"):
-                container_number += 1
-                manual_results[f"container_{container_number}"] = int(type_tag.text)
-            for container in range(1, 251):
-                self.containers[container].setValue(
-                    manual_results[f"container_{container}"]
-                )
+            try:
+                root = ET.parse(fileName).getroot()
+                container_number = 0
+                manual_results = {}
+                for type_tag in root.findall("Sample/Manual"):
+                    container_number += 1
+                    manual_results[f"container_{container_number}"] = int(type_tag.text)
+                for container in range(1, 251):
+                    self.containers[container].setValue(
+                        manual_results[f"container_{container}"]
+                    )
+            except(KeyError):
+                pass
 
 
 class LoadMachineResults(QMainWindow):
@@ -230,7 +233,7 @@ class LoadMachineResults(QMainWindow):
             self,
             "Open FQV or Machine results",
             "",
-            "All Files (*);;Pickle (*.pkl)",
+            "All Files (*);;Pickle (*.pkl);;XML (*.xml)",
             options=options,
         )
         self.results_title = ""
