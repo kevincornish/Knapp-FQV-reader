@@ -32,6 +32,7 @@ class MainApp(QWidget):
         self.load_fqv = QPushButton("Load FQV", self)
         self.load_machine_results = QPushButton("Load Machine Results (Particle)", self)
         self.compare_results = QPushButton("Compare Results", self)
+        self.compare_results.setEnabled(False)
         self.quit_button = QPushButton("Quit", self)
 
         layout = QVBoxLayout(self)
@@ -57,6 +58,7 @@ class MainApp(QWidget):
 
     def LoadMachineResults(self):
         self.machine_window = LoadMachineResults()
+        self.compare_results.setEnabled(True)
         self.machine_window.show()
 
     def CompareResults(self):
