@@ -62,7 +62,9 @@ class MainApp(QWidget):
         self.machine_window.show()
 
     def CompareResults(self):
-        self.compare_window = CompareResults(self.fqv_window.manual_results, self.machine_window.machine_results)
+        self.compare_window = CompareResults(
+            self.fqv_window.manual_results, self.machine_window.machine_results
+        )
         self.compare_window.show()
 
     @pyqtSlot()
@@ -116,7 +118,6 @@ class MainApp(QWidget):
                     pickle.dump(inspectors, fp)
             print("Random Inspection Data Saved")
 
-
     def saveFileDialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -160,7 +161,6 @@ class LoadFQV(QMainWindow):
         self.close_button.clicked.connect(self.close)
         self.close_button.move(80, 0)
         self.compare_window = CompareResults(self.manual_results)
-        
 
     def openFileDialog(self):
         options = QFileDialog.Options()
@@ -185,13 +185,17 @@ class LoadFQV(QMainWindow):
                 with open(fileName, "rb") as fp:
                     self.fqv = pickle.load(fp)
                 for container in range(1, 251):
-                    self.fqv_containers[container].setValue(
+                    self.manual_results[f"container_{container}"] = (
                         self.fqv[f"inspector1_{container}"]
                         + self.fqv[f"inspector2_{container}"]
                         + self.fqv[f"inspector3_{container}"]
                         + self.fqv[f"inspector4_{container}"]
                         + self.fqv[f"inspector5_{container}"]
                     )
+                    self.fqv_containers[container].setValue(
+                        self.manual_results[f"container_{container}"]
+                    )
+
             except (pickle.UnpicklingError, KeyError):
                 print("invalid FQV")
         elif fileName.endswith(".xml"):
@@ -200,7 +204,9 @@ class LoadFQV(QMainWindow):
                 container_number = 0
                 for type_tag in root.findall("Sample/Manual"):
                     container_number += 1
-                    self.manual_results[f"container_{container_number}"] = int(type_tag.text)
+                    self.manual_results[f"container_{container_number}"] = int(
+                        type_tag.text
+                    )
                 for container in range(1, 251):
                     self.fqv_containers[container].setValue(
                         self.manual_results[f"container_{container}"]
@@ -395,9 +401,13 @@ class CompareResults(QMainWindow):
             self.machine_containers[container] = QSpinBox()
             self.container_box.addWidget(QLabel(f"Manual Container {container}"))
             self.container_box.addWidget(self.manual_containers[container])
-            self.manual_containers[container].setValue(self.manual_results.get(f"container_{container}", 0))
+            self.manual_containers[container].setValue(
+                self.manual_results.get(f"container_{container}", 0)
+            )
             self.container_box.addWidget(QLabel(f"Machine Container {container}"))
-            self.machine_containers[container].setValue(self.machine_results.get(f"container_{container}", 0))
+            self.machine_containers[container].setValue(
+                self.machine_results.get(f"container_{container}", 0)
+            )
             self.container_box.addWidget(self.machine_containers[container])
         self.compare_results_widget.setLayout(self.container_box)
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
