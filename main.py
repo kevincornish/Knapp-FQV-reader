@@ -1,3 +1,4 @@
+import os
 import pickle
 import random
 import sys
@@ -6,14 +7,14 @@ from PyQt5.QtWidgets import (
     QApplication,
     QPushButton,
     QVBoxLayout,
-    QGridLayout,
+    QMainWindow,
     QWidget,
+    QScrollArea,
     QLabel,
     QFileDialog,
     QSpinBox,
 )
-from PyQt5.QtGui import *
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import Qt, pyqtSlot
 
 
 class MainApp(QWidget):
@@ -107,36 +108,48 @@ class MainApp(QWidget):
         options |= QFileDialog.DontUseNativeDialog
         self.fileName, _ = QFileDialog.getSaveFileName(
             self,
-            "QFileDialog.getSaveFileName()",
+            "Save FQV or Machine results",
             "",
             "Pickle Files (*.pkl)",
             options=options,
         )
-        if self.fileName:
-            print(self.fileName)
 
 
-class LoadFQV(QWidget):
+class LoadFQV(QMainWindow):
     def __init__(self):
         super().__init__()
         self.LoadFQVUI()
 
     def LoadFQVUI(self):
-        layout = QGridLayout(self)
-        self.container_1 = QSpinBox()
-        self.container_2 = QSpinBox()
-        layout.addWidget(QLabel("container_1"))
-        layout.addWidget(self.container_1)
-        layout.addWidget(QLabel("container_2"))
-        layout.addWidget(self.container_2)
+        self.scroll = QScrollArea()
+        self.fqv_widget = QWidget()
+        self.container_box = QVBoxLayout()
+        l1 = QLabel()
+        self.container_box.addWidget(l1)
+        self.containers = {}
+        for container in range(1, 251):
+            self.containers[container] = QSpinBox()
+            self.container_box.addWidget(QLabel(f"Container {container}"))
+            self.container_box.addWidget(self.containers[container])
+        self.fqv_widget.setLayout(self.container_box)
+        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setWidget(self.fqv_widget)
+
+        self.setCentralWidget(self.scroll)
+
+        self.setGeometry(600, 100, 300, 600)
+        self.setWindowTitle("FQV Results")
         self.openFileDialog()
+        l1.setText(f"{self.results_title}")
 
     def openFileDialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(
             self,
-            "QFileDialog.getOpenFileName()",
+            "Open FQV or Machine results",
             "",
             "All Files (*);;Pickle (*.pkl)",
             options=options,
@@ -145,37 +158,32 @@ class LoadFQV(QWidget):
             self.load_fqv(fileName)
 
     def load_fqv(self, fileName):
+        self.results_title = os.path.basename(fileName)
         if fileName.endswith(".pkl"):
             try:
                 with open(fileName, "rb") as fp:
                     self.fqv = pickle.load(fp)
-                    print(f"File: {fileName} loaded!")
-                self.container_1.setValue(
-                    self.fqv["inspector1_1"]
-                    + self.fqv["inspector2_1"]
-                    + self.fqv["inspector3_1"]
-                    + self.fqv["inspector4_1"]
-                    + self.fqv["inspector5_1"]
-                )
-                self.container_2.setValue(
-                    self.fqv["inspector1_2"]
-                    + self.fqv["inspector2_2"]
-                    + self.fqv["inspector3_2"]
-                    + self.fqv["inspector4_2"]
-                    + self.fqv["inspector5_2"]
-                )
+                for container in range(1, 251):
+                    self.containers[container].setValue(
+                        self.fqv[f"inspector1_{container}"]
+                        + self.fqv[f"inspector2_{container}"]
+                        + self.fqv[f"inspector3_{container}"]
+                        + self.fqv[f"inspector4_{container}"]
+                        + self.fqv[f"inspector5_{container}"]
+                    )
             except (pickle.UnpicklingError, KeyError):
                 print("invalid FQV")
-                pass
         elif fileName.endswith(".xml"):
             root = ET.parse(fileName).getroot()
             container_number = 0
+            manual_results = {}
             for type_tag in root.findall("Sample/Manual"):
                 container_number += 1
-                print(type_tag.text, container_number)
-        else:
-            print("invalid FQV")
-            pass
+                manual_results[f"container_{container_number}"] = int(type_tag.text)
+            for container in range(1, 251):
+                self.containers[container].setValue(
+                    manual_results[f"container_{container}"]
+                )
 
 
 if __name__ == "__main__":
