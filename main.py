@@ -21,8 +21,6 @@ class MainApp(QWidget):
     def __init__(self):
         super().__init__()
         self.title = "Knapp / FQV Reader"
-        self.width = 320
-        self.height = 200
         self.MainWindowUI()
 
     def MainWindowUI(self):
@@ -33,12 +31,14 @@ class MainApp(QWidget):
         )
         self.create_fqv_button = QPushButton("Create Dummy FQV", self)
         self.load_fqv = QPushButton("Load FQV", self)
+        self.load_machine_results = QPushButton("Load Machine Results (Particle)", self)
         self.quit_button = QPushButton("Quit", self)
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.create_man_inspect_button)
         layout.addWidget(self.create_fqv_button)
         layout.addWidget(self.load_fqv)
+        layout.addWidget(self.load_machine_results)
         layout.addWidget(self.quit_button)
 
         self.setLayout(layout)
@@ -46,11 +46,16 @@ class MainApp(QWidget):
         self.create_man_inspect_button.clicked.connect(self.dummy_man_inspect_button)
         self.quit_button.clicked.connect(self.close)
         self.load_fqv.clicked.connect(self.LoadFQV)
+        self.load_machine_results.clicked.connect(self.LoadMachineResults)
         self.show()
 
     def LoadFQV(self):
-        self.w = LoadFQV()
-        self.w.show()
+        self.fqv_window = LoadFQV()
+        self.fqv_window.show()
+
+    def LoadMachineResults(self):
+        self.machine_window = LoadMachineResults()
+        self.machine_window.show()
 
     @pyqtSlot()
     def dummy_fqv_button(self):
@@ -154,8 +159,11 @@ class LoadFQV(QMainWindow):
             "All Files (*);;Pickle (*.pkl)",
             options=options,
         )
+
+        self.results_title = ""
         if fileName:
             self.load_fqv(fileName)
+            self.results_title = os.path.basename(fileName)
 
     def load_fqv(self, fileName):
         self.results_title = os.path.basename(fileName)
@@ -184,6 +192,169 @@ class LoadFQV(QMainWindow):
                 self.containers[container].setValue(
                     manual_results[f"container_{container}"]
                 )
+
+
+class LoadMachineResults(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.LoadMachineResultsUI()
+
+    def LoadMachineResultsUI(self):
+        self.scroll = QScrollArea()
+        self.machine_results_widget = QWidget()
+        self.container_box = QVBoxLayout()
+        l1 = QLabel()
+        self.container_box.addWidget(l1)
+        self.containers = {}
+        for container in range(1, 251):
+            self.containers[container] = QSpinBox()
+            self.container_box.addWidget(QLabel(f"Container {container}"))
+            self.container_box.addWidget(self.containers[container])
+        self.machine_results_widget.setLayout(self.container_box)
+        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setWidget(self.machine_results_widget)
+
+        self.setCentralWidget(self.scroll)
+
+        self.setGeometry(600, 100, 300, 600)
+        self.setWindowTitle("Machine Results")
+        self.openFileDialog()
+        l1.setText(f"{self.results_title}")
+
+    def openFileDialog(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileNames, _ = QFileDialog.getOpenFileNames(
+            self,
+            "Open FQV or Machine results",
+            "",
+            "All Files (*);;Pickle (*.pkl)",
+            options=options,
+        )
+        self.results_title = ""
+        if fileNames:
+            for fileName in fileNames:
+                self.load_results(fileName)
+                self.results_title += f"{os.path.basename(fileName)}\n"
+
+    def load_results(self, fileName):
+        if fileName.endswith(".xml"):
+            root = ET.parse(fileName).getroot()
+            machine_results = {}
+            if "KnappRun_1_Knapp" in fileName:
+                container_number = 0
+                for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
+                    container_number += 1
+                    machine_results[f"container_{container_number}"] = int(
+                        type_tag.text
+                    )
+                    self.containers[container_number].setValue(
+                        machine_results[f"container_{container_number}"]
+                    )
+            if "KnappRun_2_Knapp" in fileName:
+                container_number = 24
+                for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
+                    container_number += 1
+                    machine_results[f"container_{container_number}"] = int(
+                        type_tag.text
+                    )
+                    self.containers[container_number].setValue(
+                        machine_results[f"container_{container_number}"]
+                    )
+            if "KnappRun_3_Knapp" in fileName:
+                container_number = 48
+                for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
+                    container_number += 1
+                    machine_results[f"container_{container_number}"] = int(
+                        type_tag.text
+                    )
+                    self.containers[container_number].setValue(
+                        machine_results[f"container_{container_number}"]
+                    )
+            if "KnappRun_4_Knapp" in fileName:
+                container_number = 72
+                for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
+                    container_number += 1
+                    machine_results[f"container_{container_number}"] = int(
+                        type_tag.text
+                    )
+                    self.containers[container_number].setValue(
+                        machine_results[f"container_{container_number}"]
+                    )
+            if "KnappRun_5_Knapp" in fileName:
+                container_number = 96
+                for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
+                    container_number += 1
+                    machine_results[f"container_{container_number}"] = int(
+                        type_tag.text
+                    )
+                    self.containers[container_number].setValue(
+                        machine_results[f"container_{container_number}"]
+                    )
+            if "KnappRun_6_Knapp" in fileName:
+                container_number = 120
+                for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
+                    container_number += 1
+                    machine_results[f"container_{container_number}"] = int(
+                        type_tag.text
+                    )
+                    self.containers[container_number].setValue(
+                        machine_results[f"container_{container_number}"]
+                    )
+            if "KnappRun_7_Knapp" in fileName:
+                container_number = 144
+                for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
+                    container_number += 1
+                    machine_results[f"container_{container_number}"] = int(
+                        type_tag.text
+                    )
+                    self.containers[container_number].setValue(
+                        machine_results[f"container_{container_number}"]
+                    )
+            if "KnappRun_8_Knapp" in fileName:
+                container_number = 168
+                for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
+                    container_number += 1
+                    machine_results[f"container_{container_number}"] = int(
+                        type_tag.text
+                    )
+                    self.containers[container_number].setValue(
+                        machine_results[f"container_{container_number}"]
+                    )
+            if "KnappRun_9_Knapp" in fileName:
+                container_number = 192
+                for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
+                    container_number += 1
+                    machine_results[f"container_{container_number}"] = int(
+                        type_tag.text
+                    )
+                    self.containers[container_number].setValue(
+                        machine_results[f"container_{container_number}"]
+                    )
+            if "KnappRun_10_Knapp" in fileName:
+                container_number = 216
+                for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
+                    container_number += 1
+                    machine_results[f"container_{container_number}"] = int(
+                        type_tag.text
+                    )
+                    self.containers[container_number].setValue(
+                        machine_results[f"container_{container_number}"]
+                    )
+            if "KnappRun_11_Knapp" in fileName:
+                container_number = 240
+                for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
+                    container_number += 1
+                    if container_number > 250:
+                        break
+                    machine_results[f"container_{container_number}"] = int(
+                        type_tag.text
+                    )
+                    self.containers[container_number].setValue(
+                        machine_results[f"container_{container_number}"]
+                    )
 
 
 if __name__ == "__main__":
