@@ -2,6 +2,8 @@
 
 Knapp / FQV Reader is a python application that will open pre-generated FQV or Knapp machine run files. A comparison of the machine vs manual inspection can be viewed and a bar chart with the machine vs manual efficiency can be generated.
 
+![GUI](/img/GUI.gif?raw=true "GUI")
+
 ## Knapp
 The Knapp theory, introduced by Dr. Julius Z. Knapp over two decades ago, enables an objective comparison and validation of particulate inspection techniques. This theory is grounded in the understanding that particulate inspection, whether performed by humans or automated systems, is inherently probabilistic rather than deterministic. This probabilistic nature is attributed to factors such as the size, typology, and contrast of encountered particulates.
 
