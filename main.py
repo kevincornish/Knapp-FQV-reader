@@ -160,44 +160,49 @@ class MainApp(QWidget):
         )
 
 
-class LoadFQV(QMainWindow):
+class LoadFQV(QWidget):
     """
     Class for loading FQV results.
     """
 
     def __init__(self):
         super().__init__()
-        self.setGeometry(600, 100, 300, 600)
+        self.setGeometry(600, 100, 150, 600)
         self.setWindowTitle("FQV Results")
         self.manual_results = {}
+        self.fqv_containers = {}
         self.LoadFQVUI()
 
     def LoadFQVUI(self):
         """
         Setup the UI for loading FQV results.
         """
-        self.scroll = QScrollArea()
-        self.fqv_widget = QWidget()
-        self.container_box = QVBoxLayout()
-        l1 = QLabel()
-        self.container_box.addWidget(l1)
-        self.fqv_containers = {}
-        for container in range(1, 251):
-            self.fqv_containers[container] = QSpinBox()
-            self.container_box.addWidget(QLabel(f"Container {container}"))
-            self.container_box.addWidget(self.fqv_containers[container])
-        self.fqv_widget.setLayout(self.container_box)
-        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setWidget(self.fqv_widget)
-        self.setCentralWidget(self.scroll)
         self.openFileDialog()
+        self.fqv_widget = QVBoxLayout()
+        l1 = QLabel()
+        self.fqv_widget.addWidget(l1)
+        table = QTableWidget()
+        table.setRowCount(250)
+        table.setColumnCount(1)
+        table.setHorizontalHeaderLabels(["Manual"])
+        for container in range(1, 251):
+            self.fqv_containers[container] = QTableWidgetItem(str(self.manual_results.get(f"container_{container}", 0)))
+            table.setItem(container - 1, 0, self.fqv_containers[container])
+            self.fqv_containers[container].setFlags(self.fqv_containers[container].flags() & ~Qt.ItemIsEditable)
+            if int(self.fqv_containers[container].text()) > 7:
+                self.fqv_containers[container].setData(Qt.UserRole, "high_value")
+
+        colourCell = ColourCell()
+        table.setItemDelegate(colourCell)
         l1.setText(f"{self.results_title}")
         self.close_button = QPushButton("Close", self)
         self.close_button.clicked.connect(self.close)
-        self.close_button.move(80, 0)
+        button_layout = QVBoxLayout()
+        button_layout.addWidget(self.close_button)
+        self.fqv_widget.addWidget(table)
+        self.fqv_widget.addLayout(button_layout)
         self.compare_window = CompareResults(self.manual_results)
+        self.setLayout(self.fqv_widget)
 
     def openFileDialog(self):
         options = QFileDialog.Options()
@@ -233,10 +238,6 @@ class LoadFQV(QMainWindow):
                         / 50
                         * 10
                     )
-                    self.fqv_containers[container].setValue(
-                        self.manual_results[f"container_{container}"]
-                    )
-
             except (pickle.UnpicklingError, KeyError):
                 pass
         elif fileName.endswith(".xml"):
@@ -247,10 +248,6 @@ class LoadFQV(QMainWindow):
                     container_number += 1
                     self.manual_results[f"container_{container_number}"] = int(
                         type_tag.text
-                    )
-                for container in range(1, 251):
-                    self.fqv_containers[container].setValue(
-                        self.manual_results[f"container_{container}"]
                     )
             except KeyError:
                 pass
