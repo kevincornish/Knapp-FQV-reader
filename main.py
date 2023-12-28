@@ -5,6 +5,7 @@ import sys
 import xml.etree.ElementTree as ET
 from PyQt5.QtWidgets import (
     QApplication,
+    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QMainWindow,
@@ -13,8 +14,12 @@ from PyQt5.QtWidgets import (
     QLabel,
     QFileDialog,
     QSpinBox,
+    QTableWidget,
+    QTableWidgetItem,
+    QStyledItemDelegate,
 )
 from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtGui import QBrush, QColor, QPalette
 
 
 class MainApp(QWidget):
@@ -24,7 +29,7 @@ class MainApp(QWidget):
         self.MainWindowUI()
 
     def MainWindowUI(self):
-        self.resize(400, 370)
+        self.resize(200, 200)
         self.create_man_inspect_button = QPushButton(
             "Create Dummy Inspection Data", self
         )
@@ -58,8 +63,8 @@ class MainApp(QWidget):
 
     def LoadMachineResults(self):
         self.machine_window = LoadMachineResults()
-        self.compare_results.setEnabled(True)
         self.machine_window.show()
+        self.compare_results.setEnabled(True)
 
     def CompareResults(self):
         self.compare_window = CompareResults(
@@ -90,7 +95,6 @@ class MainApp(QWidget):
             else:
                 with open(f"{self.fileName}.pkl", "wb") as fp:
                     pickle.dump(inspectors, fp)
-            print("FQV Data Saved")
 
     @pyqtSlot()
     def dummy_man_inspect_button(self):
@@ -116,7 +120,6 @@ class MainApp(QWidget):
             else:
                 with open(f"{self.fileName}.pkl", "wb") as fp:
                     pickle.dump(inspectors, fp)
-            print("Random Inspection Data Saved")
 
     def saveFileDialog(self):
         options = QFileDialog.Options()
@@ -185,19 +188,23 @@ class LoadFQV(QMainWindow):
                 with open(fileName, "rb") as fp:
                     self.fqv = pickle.load(fp)
                 for container in range(1, 251):
-                    self.manual_results[f"container_{container}"] = (round((
-                        self.fqv[f"inspector1_{container}"]
-                        + self.fqv[f"inspector2_{container}"]
-                        + self.fqv[f"inspector3_{container}"]
-                        + self.fqv[f"inspector4_{container}"]
-                        + self.fqv[f"inspector5_{container}"])  / 50 * 10 )
+                    self.manual_results[f"container_{container}"] = round(
+                        (
+                            self.fqv[f"inspector1_{container}"]
+                            + self.fqv[f"inspector2_{container}"]
+                            + self.fqv[f"inspector3_{container}"]
+                            + self.fqv[f"inspector4_{container}"]
+                            + self.fqv[f"inspector5_{container}"]
+                        )
+                        / 50
+                        * 10
                     )
                     self.fqv_containers[container].setValue(
                         self.manual_results[f"container_{container}"]
                     )
 
             except (pickle.UnpicklingError, KeyError):
-                print("invalid FQV")
+                pass
         elif fileName.endswith(".xml"):
             try:
                 root = ET.parse(fileName).getroot()
@@ -383,7 +390,7 @@ class LoadMachineResults(QMainWindow):
         return self.machine_results
 
 
-class CompareResults(QMainWindow):
+class CompareResults(QWidget):
     def __init__(self, manual_results=None, machine_results=None):
         super().__init__()
         self.manual_results = manual_results or {}
@@ -391,34 +398,67 @@ class CompareResults(QMainWindow):
         self.CompareResultsUI()
 
     def CompareResultsUI(self):
-        self.scroll = QScrollArea()
-        self.compare_results_widget = QWidget()
-        self.container_box = QVBoxLayout()
-        self.manual_containers = {}
-        self.machine_containers = {}
-        for container in range(1, 251):
-            self.manual_containers[container] = QSpinBox()
-            self.machine_containers[container] = QSpinBox()
-            self.container_box.addWidget(QLabel(f"Manual Container {container}"))
-            self.container_box.addWidget(self.manual_containers[container])
-            self.manual_containers[container].setValue(
-                self.manual_results.get(f"container_{container}", 0)
-            )
-            self.container_box.addWidget(QLabel(f"Machine Container {container}"))
-            self.machine_containers[container].setValue(
-                self.machine_results.get(f"container_{container}", 0)
-            )
-            self.container_box.addWidget(self.machine_containers[container])
-        self.compare_results_widget.setLayout(self.container_box)
-        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setWidget(self.compare_results_widget)
-
-        self.setCentralWidget(self.scroll)
-
+        self.compare_results_widget = QVBoxLayout()
         self.setGeometry(600, 100, 300, 600)
         self.setWindowTitle("FQV vs Machine Results")
+        self.manual_containers = {}
+        self.machine_containers = {}
+        table = QTableWidget()
+        table.setRowCount(250)
+        table.setColumnCount(2)
+        table.setHorizontalHeaderLabels(["Manual", "Machine"])
+
+        for container in range(1, 251):
+            manual_item = QTableWidgetItem(
+                str(self.manual_results.get(f"container_{container}", 0))
+            )
+            machine_item = QTableWidgetItem(
+                str(self.machine_results.get(f"container_{container}", 0))
+            )
+
+            manual_item.setFlags(manual_item.flags() & ~Qt.ItemIsEditable)
+            machine_item.setFlags(machine_item.flags() & ~Qt.ItemIsEditable)
+
+            table.setItem(container - 1, 0, manual_item)
+            table.setItem(container - 1, 1, machine_item)
+
+            if int(manual_item.text()) > 7:
+                manual_item.setData(Qt.UserRole, "high_value")
+            if int(machine_item.text()) > 7:
+                machine_item.setData(Qt.UserRole, "high_value")
+
+        colourCell = ColourCell()
+        table.setItemDelegate(colourCell)
+        self.close_button = QPushButton("Close", self)
+        self.close_button.clicked.connect(self.close)
+        button_layout = QVBoxLayout()
+        button_layout.addWidget(self.close_button)
+        self.compare_results_widget.addWidget(table)
+        self.compare_results_widget.addLayout(button_layout)
+        self.setLayout(self.compare_results_widget)
+
+
+class ColourCell(QStyledItemDelegate):
+    def initStyleOption(self, option, index):
+        super(ColourCell, self).initStyleOption(option, index)
+
+        value = int(index.data(Qt.DisplayRole))
+
+        if 0 <= value <= 3:
+            option.backgroundBrush = QBrush(QColor(0, 150, 0))
+            palette = option.palette
+            palette.setColor(QPalette.Text, Qt.black)
+            option.palette = palette
+        elif 4 <= value <= 6:
+            option.backgroundBrush = QBrush(QColor(255, 165, 0))
+            palette = option.palette
+            palette.setColor(QPalette.Text, Qt.black)
+            option.palette = palette
+        elif value >= 7:
+            option.backgroundBrush = QBrush(QColor(255, 0, 0))
+            palette = option.palette
+            palette.setColor(QPalette.Text, Qt.white)
+            option.palette = palette
 
 
 if __name__ == "__main__":
