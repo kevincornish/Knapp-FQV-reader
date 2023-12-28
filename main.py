@@ -25,11 +25,11 @@ from PyQt5.QtGui import QBrush, QColor, QPalette
 class MainApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle = "Knapp / FQV Reader"
+        self.setGeometry(600, 400, 200, 200)
+        self.setWindowTitle("Knapp / FQV Reader")
         self.MainWindowUI()
 
     def MainWindowUI(self):
-        self.resize(200, 200)
         self.create_man_inspect_button = QPushButton(
             "Create Dummy Inspection Data", self
         )
@@ -59,11 +59,29 @@ class MainApp(QWidget):
 
     def LoadFQV(self):
         self.fqv_window = LoadFQV()
-        self.fqv_window.show()
+        confirmation = QMessageBox.question(
+            self,
+            "Confirmation",
+            "Show FQV?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+
+        if confirmation == QMessageBox.Yes:
+            self.fqv_window.show()
 
     def LoadMachineResults(self):
         self.machine_window = LoadMachineResults()
-        self.machine_window.show()
+        confirmation = QMessageBox.question(
+            self,
+            "Confirmation",
+            "Show Machine Results?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+
+        if confirmation == QMessageBox.Yes:
+            self.machine_window.show()
         self.compare_results.setEnabled(True)
 
     def CompareResults(self):
