@@ -25,6 +25,10 @@ from matplotlib.figure import Figure
 
 
 class MainApp(QWidget):
+    """
+    Main application window for the Knapp/FQV Reader.
+    """
+
     def __init__(self):
         super().__init__()
         self.setGeometry(600, 400, 200, 200)
@@ -32,6 +36,9 @@ class MainApp(QWidget):
         self.MainWindowUI()
 
     def MainWindowUI(self):
+        """
+        Create the main window UI layout.
+        """
         self.create_man_inspect_button = QPushButton(
             "Create Dummy Inspection Data", self
         )
@@ -154,6 +161,10 @@ class MainApp(QWidget):
 
 
 class LoadFQV(QMainWindow):
+    """
+    Class for loading FQV results.
+    """
+
     def __init__(self):
         super().__init__()
         self.setGeometry(600, 100, 300, 600)
@@ -162,6 +173,9 @@ class LoadFQV(QMainWindow):
         self.LoadFQVUI()
 
     def LoadFQVUI(self):
+        """
+        Setup the UI for loading FQV results.
+        """
         self.scroll = QScrollArea()
         self.fqv_widget = QWidget()
         self.container_box = QVBoxLayout()
@@ -244,6 +258,10 @@ class LoadFQV(QMainWindow):
 
 
 class LoadMachineResults(QMainWindow):
+    """
+    Class for loading machine inspection results.
+    """
+
     def __init__(self):
         super().__init__()
         self.setGeometry(600, 100, 300, 600)
@@ -252,6 +270,9 @@ class LoadMachineResults(QMainWindow):
         self.LoadMachineResultsUI()
 
     def LoadMachineResultsUI(self):
+        """
+        Setup the UI for loading machine results.
+        """
         self.scroll = QScrollArea()
         self.machine_results_widget = QWidget()
         self.container_box = QVBoxLayout()
@@ -411,6 +432,10 @@ class LoadMachineResults(QMainWindow):
 
 
 class CompareResults(QWidget):
+    """
+    Class for comparing manual and machine inspection results.
+    """
+
     def __init__(self, manual_results=None, machine_results=None):
         super().__init__()
         self.manual_results = manual_results or {}
@@ -419,6 +444,9 @@ class CompareResults(QWidget):
         self.CompareResultsUI()
 
     def CompareResultsUI(self):
+        """
+        Setup the UI for comparing manual and machine inspection results.
+        """
         self.compare_results_widget = QVBoxLayout()
         self.setGeometry(600, 100, 300, 600)
         self.setWindowTitle("FQV vs Machine Results")
@@ -476,7 +504,14 @@ class CompareResults(QWidget):
 
 
 class ColourCell(QStyledItemDelegate):
+    """
+    Custom delegate class for coloring cells based on their values.
+    """
+
     def initStyleOption(self, option, index):
+        """
+        Initialize style options for the delegate to customize cell appearance.
+        """
         super(ColourCell, self).initStyleOption(option, index)
 
         value = int(index.data(Qt.DisplayRole))
@@ -499,6 +534,10 @@ class ColourCell(QStyledItemDelegate):
 
 
 class EfficiencyWindow(QMainWindow):
+    """
+    Class for displaying a bar chart comparing manual and machine efficiency.
+    """
+
     def __init__(self, manual_results=None, machine_results=None):
         super().__init__()
 
@@ -517,6 +556,9 @@ class EfficiencyWindow(QMainWindow):
         self.plot_bar_chart()
 
     def plot_bar_chart(self):
+        """
+        Plot a bar chart comparing manual and machine efficiency.
+        """
         ax = self.efficiency_canvas.figure.add_subplot(111)
 
         if not self.manual_containers or not self.machine_containers:
