@@ -10,10 +10,8 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QMainWindow,
     QWidget,
-    QScrollArea,
     QLabel,
     QFileDialog,
-    QSpinBox,
     QTableWidget,
     QTableWidgetItem,
     QStyledItemDelegate,
@@ -186,9 +184,13 @@ class LoadFQV(QWidget):
         table.setColumnCount(1)
         table.setHorizontalHeaderLabels(["Manual"])
         for container in range(1, 251):
-            self.fqv_containers[container] = QTableWidgetItem(str(self.manual_results.get(f"container_{container}", 0)))
+            self.fqv_containers[container] = QTableWidgetItem(
+                str(self.manual_results.get(f"container_{container}", 0))
+            )
             table.setItem(container - 1, 0, self.fqv_containers[container])
-            self.fqv_containers[container].setFlags(self.fqv_containers[container].flags() & ~Qt.ItemIsEditable)
+            self.fqv_containers[container].setFlags(
+                self.fqv_containers[container].flags() & ~Qt.ItemIsEditable
+            )
             if int(self.fqv_containers[container].text()) > 7:
                 self.fqv_containers[container].setData(Qt.UserRole, "high_value")
 
@@ -254,45 +256,52 @@ class LoadFQV(QWidget):
         return self.manual_results
 
 
-class LoadMachineResults(QMainWindow):
+class LoadMachineResults(QWidget):
     """
     Class for loading machine inspection results.
     """
 
     def __init__(self):
         super().__init__()
-        self.setGeometry(600, 100, 300, 600)
+        self.setGeometry(600, 100, 150, 600)
         self.setWindowTitle("Machine Results")
         self.machine_results = {}
+        self.machine_containers = {}
         self.LoadMachineResultsUI()
 
     def LoadMachineResultsUI(self):
         """
         Setup the UI for loading machine results.
         """
-        self.scroll = QScrollArea()
-        self.machine_results_widget = QWidget()
-        self.container_box = QVBoxLayout()
-        l1 = QLabel()
-        self.container_box.addWidget(l1)
-        self.machine_containers = {}
-        for container in range(1, 251):
-            self.machine_containers[container] = QSpinBox()
-            self.container_box.addWidget(QLabel(f"Container {container}"))
-            self.container_box.addWidget(self.machine_containers[container])
-        self.machine_results_widget.setLayout(self.container_box)
-        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setWidget(self.machine_results_widget)
-
-        self.setCentralWidget(self.scroll)
-
         self.openFileDialog()
+        self.machine_results_widget = QVBoxLayout()
+        l1 = QLabel()
+        self.machine_results_widget.addWidget(l1)
+        table = QTableWidget()
+        table.setRowCount(250)
+        table.setColumnCount(1)
+        table.setHorizontalHeaderLabels(["Machine"])
+        for container in range(1, 251):
+            self.machine_containers[container] = QTableWidgetItem(
+                str(self.machine_results.get(f"container_{container}", 0))
+            )
+            table.setItem(container - 1, 0, self.machine_containers[container])
+            self.machine_containers[container].setFlags(
+                self.machine_containers[container].flags() & ~Qt.ItemIsEditable
+            )
+            if int(self.machine_containers[container].text()) > 7:
+                self.machine_containers[container].setData(Qt.UserRole, "high_value")
+
+        colourCell = ColourCell()
+        table.setItemDelegate(colourCell)
         l1.setText(f"{self.results_title}")
         self.close_button = QPushButton("Close", self)
         self.close_button.clicked.connect(self.close)
-        self.close_button.move(80, 0)
+        button_layout = QVBoxLayout()
+        button_layout.addWidget(self.close_button)
+        self.machine_results_widget.addWidget(table)
+        self.machine_results_widget.addLayout(button_layout)
+        self.setLayout(self.machine_results_widget)
 
     def openFileDialog(self):
         options = QFileDialog.Options()
@@ -320,18 +329,12 @@ class LoadMachineResults(QMainWindow):
                     self.machine_results[f"container_{container_number}"] = int(
                         type_tag.text
                     )
-                    self.machine_containers[container_number].setValue(
-                        self.machine_results[f"container_{container_number}"]
-                    )
             if "KnappRun_2_" in fileName:
                 container_number = 24
                 for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
                     container_number += 1
                     self.machine_results[f"container_{container_number}"] = int(
                         type_tag.text
-                    )
-                    self.machine_containers[container_number].setValue(
-                        self.machine_results[f"container_{container_number}"]
                     )
             if "KnappRun_3_" in fileName:
                 container_number = 48
@@ -340,18 +343,12 @@ class LoadMachineResults(QMainWindow):
                     self.machine_results[f"container_{container_number}"] = int(
                         type_tag.text
                     )
-                    self.machine_containers[container_number].setValue(
-                        self.machine_results[f"container_{container_number}"]
-                    )
             if "KnappRun_4_" in fileName:
                 container_number = 72
                 for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
                     container_number += 1
                     self.machine_results[f"container_{container_number}"] = int(
                         type_tag.text
-                    )
-                    self.machine_containers[container_number].setValue(
-                        self.machine_results[f"container_{container_number}"]
                     )
             if "KnappRun_5_" in fileName:
                 container_number = 96
@@ -360,18 +357,12 @@ class LoadMachineResults(QMainWindow):
                     self.machine_results[f"container_{container_number}"] = int(
                         type_tag.text
                     )
-                    self.machine_containers[container_number].setValue(
-                        self.machine_results[f"container_{container_number}"]
-                    )
             if "KnappRun_6_" in fileName:
                 container_number = 120
                 for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
                     container_number += 1
                     self.machine_results[f"container_{container_number}"] = int(
                         type_tag.text
-                    )
-                    self.machine_containers[container_number].setValue(
-                        self.machine_results[f"container_{container_number}"]
                     )
             if "KnappRun_7_" in fileName:
                 container_number = 144
@@ -380,18 +371,12 @@ class LoadMachineResults(QMainWindow):
                     self.machine_results[f"container_{container_number}"] = int(
                         type_tag.text
                     )
-                    self.machine_containers[container_number].setValue(
-                        self.machine_results[f"container_{container_number}"]
-                    )
             if "KnappRun_8_" in fileName:
                 container_number = 168
                 for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
                     container_number += 1
                     self.machine_results[f"container_{container_number}"] = int(
                         type_tag.text
-                    )
-                    self.machine_containers[container_number].setValue(
-                        self.machine_results[f"container_{container_number}"]
                     )
             if "KnappRun_9_" in fileName:
                 container_number = 192
@@ -400,18 +385,12 @@ class LoadMachineResults(QMainWindow):
                     self.machine_results[f"container_{container_number}"] = int(
                         type_tag.text
                     )
-                    self.machine_containers[container_number].setValue(
-                        self.machine_results[f"container_{container_number}"]
-                    )
             if "KnappRun_10_" in fileName:
                 container_number = 216
                 for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
                     container_number += 1
                     self.machine_results[f"container_{container_number}"] = int(
                         type_tag.text
-                    )
-                    self.machine_containers[container_number].setValue(
-                        self.machine_results[f"container_{container_number}"]
                     )
             if "KnappRun_11_" in fileName:
                 container_number = 240
@@ -421,9 +400,6 @@ class LoadMachineResults(QMainWindow):
                         break
                     self.machine_results[f"container_{container_number}"] = int(
                         type_tag.text
-                    )
-                    self.machine_containers[container_number].setValue(
-                        self.machine_results[f"container_{container_number}"]
                     )
         return self.machine_results
 
