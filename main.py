@@ -714,40 +714,6 @@ class CreateFQV(QWidget):
 
         self.fqv_results_table.setItemDelegate(ColourCell())
 
-    def open_file(self):
-        fileName, _ = QFileDialog.getOpenFileName(
-            self,
-            "Open FQV file",
-            "",
-            "Pickle Files (*.pkl)",
-        )
-
-        if fileName.endswith(".pkl"):
-            try:
-                self.fqv = read_pickle_file(fileName)
-                for container in range(1, 251):
-                    key = f"container_{container}"
-                    value = self.fqv.get(key, None)
-                    if value is not None:
-                        if isinstance(value, list):
-                            avg_value = round((sum(value) / 50) * 10)
-                            self.manual_results[key] = avg_value
-                        else:
-                            self.manual_results[key] = value
-            except (pickle.UnpicklingError, KeyError):
-                pass
-        elif fileName.endswith(".xml"):
-            try:
-                root = ET.parse(fileName).getroot()
-                container_number = 0
-                for type_tag in root.findall("Sample/Manual"):
-                    container_number += 1
-                    self.manual_results[f"container_{container_number}"] = int(
-                        type_tag.text
-                    )
-            except KeyError:
-                pass
-
     def save_fqv_results(self):
         for container in range(1, 251):
             self.manual_results[f"container_{container}"] = int(
@@ -766,9 +732,9 @@ class CreateFQV(QWidget):
     def open_file(self):
         fileName, _ = QFileDialog.getOpenFileName(
             self,
-            "Open Pre-made FQV Data",
+            "Open FQV Data",
             "",
-            "Pickle Files (*.pkl);;XML Files (*.xml)",
+            "All Files (*);;Pickle Files (*.pkl);;XML Files (*.xml)",
         )
 
         if fileName:
