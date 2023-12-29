@@ -3,7 +3,13 @@ import pickle
 import random
 import sys
 import xml.etree.ElementTree as ET
-from utils import show_confirmation, write_pickle_file, read_pickle_file
+from utils import (
+    show_confirmation,
+    write_pickle_file,
+    read_pickle_file,
+    setup_results_table,
+    ColourCell,
+)
 from PyQt6.QtWidgets import (
     QApplication,
     QPushButton,
@@ -14,10 +20,8 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QTableWidget,
     QTableWidgetItem,
-    QStyledItemDelegate,
 )
 from PyQt6.QtCore import Qt, pyqtSlot
-from PyQt6.QtGui import QBrush, QColor
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -157,31 +161,17 @@ class LoadFQV(QWidget):
         self.fqv_widget = QVBoxLayout()
         l1 = QLabel()
         self.fqv_widget.addWidget(l1)
-        table = QTableWidget()
-        table.setRowCount(250)
-        table.setColumnCount(1)
-        table.setHorizontalHeaderLabels(["Manual"])
-        for container in range(1, 251):
-            self.fqv_containers[container] = QTableWidgetItem(
-                str(self.manual_results.get(f"container_{container}", 0))
-            )
-            table.setItem(container - 1, 0, self.fqv_containers[container])
-            self.fqv_containers[container].setFlags(
-                self.fqv_containers[container].flags() & ~Qt.ItemFlag.ItemIsEditable
-            )
-            if int(self.fqv_containers[container].text()) > 7:
-                self.fqv_containers[container].setData(
-                    Qt.ItemDataRole.UserRole, "high_value"
-                )
 
-        colourCell = ColourCell()
-        table.setItemDelegate(colourCell)
+        self.results_table, self.fqv_containers = setup_results_table(
+            self.manual_results, "Manual"
+        )
+
         l1.setText(f"{self.results_title}")
         self.close_button = QPushButton("Close", self)
         self.close_button.clicked.connect(self.close)
         button_layout = QVBoxLayout()
         button_layout.addWidget(self.close_button)
-        self.fqv_widget.addWidget(table)
+        self.fqv_widget.addWidget(self.results_table)
         self.fqv_widget.addLayout(button_layout)
         self.compare_window = CompareResults(self.manual_results)
         self.setLayout(self.fqv_widget)
@@ -258,31 +248,17 @@ class LoadMachineResults(QWidget):
         self.machine_results_widget = QVBoxLayout()
         l1 = QLabel()
         self.machine_results_widget.addWidget(l1)
-        table = QTableWidget()
-        table.setRowCount(250)
-        table.setColumnCount(1)
-        table.setHorizontalHeaderLabels(["Machine"])
-        for container in range(1, 251):
-            self.machine_containers[container] = QTableWidgetItem(
-                str(self.machine_results.get(f"container_{container}", 0))
-            )
-            table.setItem(container - 1, 0, self.machine_containers[container])
-            self.machine_containers[container].setFlags(
-                self.machine_containers[container].flags() & ~Qt.ItemFlag.ItemIsEditable
-            )
-            if int(self.machine_containers[container].text()) > 7:
-                self.machine_containers[container].setData(
-                    Qt.ItemDataRole.UserRole, "high_value"
-                )
 
-        colourCell = ColourCell()
-        table.setItemDelegate(colourCell)
+        self.results_table, self.machine_containers = setup_results_table(
+            self.machine_results, "Machine"
+        )
+
         l1.setText(f"{self.results_title}")
         self.close_button = QPushButton("Close", self)
         self.close_button.clicked.connect(self.close)
         button_layout = QVBoxLayout()
         button_layout.addWidget(self.close_button)
-        self.machine_results_widget.addWidget(table)
+        self.machine_results_widget.addWidget(self.results_table)
         self.machine_results_widget.addLayout(button_layout)
         self.setLayout(self.machine_results_widget)
 
@@ -456,27 +432,6 @@ class CompareResults(QWidget):
             self.efficiency_window.show()
 
 
-class ColourCell(QStyledItemDelegate):
-    """
-    Custom delegate class for coloring cells based on their values.
-    """
-
-    def initStyleOption(self, option, index):
-        """
-        Initialize style options for the delegate to customize cell appearance.
-        """
-        super(ColourCell, self).initStyleOption(option, index)
-
-        value = int(index.data(Qt.ItemDataRole.DisplayRole))
-
-        if 0 <= value <= 3:
-            option.backgroundBrush = QBrush(QColor(0, 150, 0))
-        elif 4 <= value <= 6:
-            option.backgroundBrush = QBrush(QColor(255, 165, 0))
-        elif value >= 7:
-            option.backgroundBrush = QBrush(QColor(255, 0, 0))
-
-
 class EfficiencyWindow(QMainWindow):
     """
     Class for displaying a bar chart comparing manual and machine efficiency.
@@ -607,6 +562,9 @@ class EfficiencyWindow(QMainWindow):
 
 
 class CreateFQV(QWidget):
+    """
+    Class for creating FQV results.
+    """
     def __init__(self):
         super().__init__()
         self.setGeometry(600, 100, 150, 600)
@@ -616,34 +574,41 @@ class CreateFQV(QWidget):
         self.CreateFQVUI()
 
     def CreateFQVUI(self):
+        """
+        Setup the UI for creating FQV results.
+        """
         self.fqv_widget = QVBoxLayout()
 
-        table = QTableWidget()
-        table.setRowCount(250)
-        table.setColumnCount(1)
-        table.setHorizontalHeaderLabels(["Manual"])
+        self.setup_table()
 
-        for container in range(1, 251):
-            self.fqv_containers[container] = QTableWidgetItem("0")
-            table.setItem(container - 1, 0, self.fqv_containers[container])
-
-        colourCell = ColourCell()
-        table.setItemDelegate(colourCell)
-
-        l1 = QLabel()
-        l1.setText("Create FQV Results")
+        title = QLabel("Create FQV Results")
         self.save_button = QPushButton("Save", self)
         self.save_button.clicked.connect(self.save_fqv_results)
 
         self.close_button = QPushButton("Close", self)
         self.close_button.clicked.connect(self.close)
 
-        self.fqv_widget.addWidget(l1)
-        self.fqv_widget.addWidget(table)
+        self.fqv_widget.addWidget(title)
+        self.fqv_widget.addWidget(self.fqv_results_table)
         self.fqv_widget.addWidget(self.save_button)
         self.fqv_widget.addWidget(self.close_button)
 
         self.setLayout(self.fqv_widget)
+
+    def setup_table(self):
+        self.fqv_results_table = QTableWidget()
+        self.fqv_results_table.setRowCount(250)
+        self.fqv_results_table.setColumnCount(1)
+        self.fqv_results_table.setHorizontalHeaderLabels(["Manual"])
+
+        for container in range(1, 251):
+            self.fqv_containers[container] = QTableWidgetItem("0")
+            self.fqv_results_table.setItem(
+                container - 1, 0, self.fqv_containers[container]
+            )
+
+        colourCell = ColourCell()
+        self.fqv_results_table.setItemDelegate(colourCell)
 
     def save_fqv_results(self):
         for container in range(1, 251):
