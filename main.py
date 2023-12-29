@@ -3,7 +3,7 @@ import pickle
 import random
 import sys
 import xml.etree.ElementTree as ET
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QApplication,
     QMessageBox,
     QPushButton,
@@ -16,8 +16,8 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem,
     QStyledItemDelegate,
 )
-from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtGui import QBrush, QColor, QPalette
+from PyQt6.QtCore import Qt, pyqtSlot
+from PyQt6.QtGui import QBrush, QColor
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -70,11 +70,11 @@ class MainApp(QWidget):
             self,
             "Confirmation",
             "Show FQV?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
         )
 
-        if confirmation == QMessageBox.Yes:
+        if confirmation == QMessageBox.StandardButton.Yes:
             self.fqv_window.show()
 
     def LoadMachineResults(self):
@@ -83,11 +83,11 @@ class MainApp(QWidget):
             self,
             "Confirmation",
             "Show Machine Results?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
         )
 
-        if confirmation == QMessageBox.Yes:
+        if confirmation == QMessageBox.StandardButton.Yes:
             self.machine_window.show()
         self.compare_results.setEnabled(True)
 
@@ -147,14 +147,11 @@ class MainApp(QWidget):
                     pickle.dump(inspectors, fp)
 
     def saveFileDialog(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
         self.fileName, _ = QFileDialog.getSaveFileName(
             self,
             "Save FQV or Machine results",
             "",
             "Pickle Files (*.pkl)",
-            options=options,
         )
 
 
@@ -189,10 +186,12 @@ class LoadFQV(QWidget):
             )
             table.setItem(container - 1, 0, self.fqv_containers[container])
             self.fqv_containers[container].setFlags(
-                self.fqv_containers[container].flags() & ~Qt.ItemIsEditable
+                self.fqv_containers[container].flags() & ~Qt.ItemFlag.ItemIsEditable
             )
             if int(self.fqv_containers[container].text()) > 7:
-                self.fqv_containers[container].setData(Qt.UserRole, "high_value")
+                self.fqv_containers[container].setData(
+                    Qt.ItemDataRole.UserRole, "high_value"
+                )
 
         colourCell = ColourCell()
         table.setItemDelegate(colourCell)
@@ -207,14 +206,11 @@ class LoadFQV(QWidget):
         self.setLayout(self.fqv_widget)
 
     def openFileDialog(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(
             self,
             "Open FQV or Machine results",
             "",
             "All Files (*);;Pickle (*.pkl);;XML (*.xml)",
-            options=options,
         )
 
         self.results_title = ""
@@ -287,10 +283,12 @@ class LoadMachineResults(QWidget):
             )
             table.setItem(container - 1, 0, self.machine_containers[container])
             self.machine_containers[container].setFlags(
-                self.machine_containers[container].flags() & ~Qt.ItemIsEditable
+                self.machine_containers[container].flags() & ~Qt.ItemFlag.ItemIsEditable
             )
             if int(self.machine_containers[container].text()) > 7:
-                self.machine_containers[container].setData(Qt.UserRole, "high_value")
+                self.machine_containers[container].setData(
+                    Qt.ItemDataRole.UserRole, "high_value"
+                )
 
         colourCell = ColourCell()
         table.setItemDelegate(colourCell)
@@ -304,14 +302,11 @@ class LoadMachineResults(QWidget):
         self.setLayout(self.machine_results_widget)
 
     def openFileDialog(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
         fileNames, _ = QFileDialog.getOpenFileNames(
             self,
             "Open FQV or Machine results",
             "",
             "All Files (*);;Pickle (*.pkl);;XML (*.xml)",
-            options=options,
         )
         self.results_title = ""
         if fileNames:
@@ -438,16 +433,16 @@ class CompareResults(QWidget):
                 str(self.machine_results.get(f"container_{container}", 0))
             )
 
-            manual_item.setFlags(manual_item.flags() & ~Qt.ItemIsEditable)
-            machine_item.setFlags(machine_item.flags() & ~Qt.ItemIsEditable)
+            manual_item.setFlags(manual_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            machine_item.setFlags(machine_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
             table.setItem(container - 1, 0, manual_item)
             table.setItem(container - 1, 1, machine_item)
 
             if int(manual_item.text()) > 7:
-                manual_item.setData(Qt.UserRole, "high_value")
+                manual_item.setData(Qt.ItemDataRole.UserRole, "high_value")
             if int(machine_item.text()) > 7:
-                machine_item.setData(Qt.UserRole, "high_value")
+                machine_item.setData(Qt.ItemDataRole.UserRole, "high_value")
 
             self.manual_containers[f"container_{container}"] = int(manual_item.text())
             self.machine_containers[f"container_{container}"] = int(machine_item.text())
@@ -487,23 +482,14 @@ class ColourCell(QStyledItemDelegate):
         """
         super(ColourCell, self).initStyleOption(option, index)
 
-        value = int(index.data(Qt.DisplayRole))
+        value = int(index.data(Qt.ItemDataRole.DisplayRole))
 
         if 0 <= value <= 3:
             option.backgroundBrush = QBrush(QColor(0, 150, 0))
-            palette = option.palette
-            palette.setColor(QPalette.Text, Qt.black)
-            option.palette = palette
         elif 4 <= value <= 6:
             option.backgroundBrush = QBrush(QColor(255, 165, 0))
-            palette = option.palette
-            palette.setColor(QPalette.Text, Qt.black)
-            option.palette = palette
         elif value >= 7:
             option.backgroundBrush = QBrush(QColor(255, 0, 0))
-            palette = option.palette
-            palette.setColor(QPalette.Text, Qt.white)
-            option.palette = palette
 
 
 class EfficiencyWindow(QMainWindow):
@@ -638,4 +624,4 @@ class EfficiencyWindow(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainApp()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
