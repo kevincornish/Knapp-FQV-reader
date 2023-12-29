@@ -424,10 +424,10 @@ class LoadManualInspection(QWidget):
                     container - 1, i, self.manual_inspection_containers[container][i]
                 )
 
-        self.manual_inspection_containers[container][i].setFlags(
-            self.manual_inspection_containers[container][i].flags()
-            & ~Qt.ItemFlag.ItemIsEditable
-        )
+                self.manual_inspection_containers[container][i].setFlags(
+                    self.manual_inspection_containers[container][i].flags()
+                    & ~Qt.ItemFlag.ItemIsEditable
+                )
 
         table.setItemDelegate(ColourCell())
         l1.setText(f"{self.results_title}")
@@ -762,15 +762,41 @@ class CreateManualInspection(QWidget):
         self.save_button = QPushButton("Save", self)
         self.save_button.clicked.connect(self.save_inspection_results)
 
+        self.open_button = QPushButton("Open", self)
+        self.open_button.clicked.connect(self.open_file)
+
         self.close_button = QPushButton("Close", self)
         self.close_button.clicked.connect(self.close)
 
         self.inspection_widget.addWidget(l1)
         self.inspection_widget.addWidget(table)
         self.inspection_widget.addWidget(self.save_button)
+        self.inspection_widget.addWidget(self.open_button)
         self.inspection_widget.addWidget(self.close_button)
 
         self.setLayout(self.inspection_widget)
+
+    def open_file(self):
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Open Manual Inspection Data",
+            "",
+            "Pickle Files (*.pkl)",
+        )
+
+        if file_path:
+            try:
+                manual_results = read_pickle_file(file_path)
+                for container in range(1, 251):
+                    inspector_results = manual_results.get(
+                        f"container_{container}", [0, 0, 0, 0, 0]
+                    )
+                    for i in range(5):
+                        self.inspection_containers[container][i].setText(
+                            str(inspector_results[i])
+                        )
+            except (pickle.UnpicklingError, KeyError):
+                pass
 
     def save_inspection_results(self):
         for container in range(1, 251):
