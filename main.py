@@ -3,9 +3,9 @@ import pickle
 import random
 import sys
 import xml.etree.ElementTree as ET
+from utils import show_confirmation, write_pickle_file, read_pickle_file
 from PyQt6.QtWidgets import (
     QApplication,
-    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QMainWindow,
@@ -40,7 +40,8 @@ class MainApp(QWidget):
         self.create_man_inspect_button = QPushButton(
             "Create Dummy Inspection Data", self
         )
-        self.create_fqv_button = QPushButton("Create Dummy FQV", self)
+        self.create_dummy_fqv_button = QPushButton("Create Dummy FQV", self)
+        self.create_fqv_button = QPushButton("Create FQV", self)
         self.load_fqv = QPushButton("Load FQV", self)
         self.load_machine_results = QPushButton("Load Machine Results (Particle)", self)
         self.compare_results = QPushButton("Compare Results", self)
@@ -49,6 +50,7 @@ class MainApp(QWidget):
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.create_man_inspect_button)
+        layout.addWidget(self.create_dummy_fqv_button)
         layout.addWidget(self.create_fqv_button)
         layout.addWidget(self.load_fqv)
         layout.addWidget(self.load_machine_results)
@@ -56,7 +58,8 @@ class MainApp(QWidget):
         layout.addWidget(self.quit_button)
 
         self.setLayout(layout)
-        self.create_fqv_button.clicked.connect(self.dummy_fqv_button)
+        self.create_dummy_fqv_button.clicked.connect(self.dummy_fqv_button)
+        self.create_fqv_button.clicked.connect(self.create_fqv_window)
         self.create_man_inspect_button.clicked.connect(self.dummy_man_inspect_button)
         self.load_fqv.clicked.connect(self.LoadFQV)
         self.load_machine_results.clicked.connect(self.LoadMachineResults)
@@ -66,28 +69,12 @@ class MainApp(QWidget):
 
     def LoadFQV(self):
         self.fqv_window = LoadFQV()
-        confirmation = QMessageBox.question(
-            self,
-            "Confirmation",
-            "Show FQV?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
-
-        if confirmation == QMessageBox.StandardButton.Yes:
+        if show_confirmation(self, "Show FQV?"):
             self.fqv_window.show()
 
     def LoadMachineResults(self):
         self.machine_window = LoadMachineResults()
-        confirmation = QMessageBox.question(
-            self,
-            "Confirmation",
-            "Show Machine Results?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
-
-        if confirmation == QMessageBox.StandardButton.Yes:
+        if show_confirmation(self, "Show Machine Results?"):
             self.machine_window.show()
         self.compare_results.setEnabled(True)
 
@@ -96,6 +83,10 @@ class MainApp(QWidget):
             self.fqv_window.manual_results, self.machine_window.machine_results
         )
         self.compare_window.show()
+
+    def create_fqv_window(self):
+        self.create_fqv_window = CreateFQV()
+        self.create_fqv_window.show()
 
     @pyqtSlot()
     def dummy_fqv_button(self):
@@ -114,12 +105,7 @@ class MainApp(QWidget):
 
         self.saveFileDialog()
         if self.fileName != "":
-            if self.fileName.endswith(".pkl"):
-                with open(f"{self.fileName}", "wb") as fp:
-                    pickle.dump(inspectors, fp)
-            else:
-                with open(f"{self.fileName}.pkl", "wb") as fp:
-                    pickle.dump(inspectors, fp)
+            write_pickle_file(self.fileName, inspectors)
 
     @pyqtSlot()
     def dummy_man_inspect_button(self):
@@ -139,12 +125,7 @@ class MainApp(QWidget):
 
         self.saveFileDialog()
         if self.fileName != "":
-            if self.fileName.endswith(".pkl"):
-                with open(f"{self.fileName}", "wb") as fp:
-                    pickle.dump(inspectors, fp)
-            else:
-                with open(f"{self.fileName}.pkl", "wb") as fp:
-                    pickle.dump(inspectors, fp)
+            write_pickle_file(self.fileName, inspectors)
 
     def saveFileDialog(self):
         self.fileName, _ = QFileDialog.getSaveFileName(
@@ -222,20 +203,24 @@ class LoadFQV(QWidget):
         self.results_title = os.path.basename(fileName)
         if fileName.endswith(".pkl"):
             try:
-                with open(fileName, "rb") as fp:
-                    self.fqv = pickle.load(fp)
+                self.fqv = read_pickle_file(fileName)
                 for container in range(1, 251):
-                    self.manual_results[f"container_{container}"] = round(
-                        (
-                            self.fqv[f"inspector1_{container}"]
-                            + self.fqv[f"inspector2_{container}"]
-                            + self.fqv[f"inspector3_{container}"]
-                            + self.fqv[f"inspector4_{container}"]
-                            + self.fqv[f"inspector5_{container}"]
+                    if "inspector1_1" in self.fqv:
+                        self.manual_results[f"container_{container}"] = round(
+                            (
+                                self.fqv[f"inspector1_{container}"]
+                                + self.fqv[f"inspector2_{container}"]
+                                + self.fqv[f"inspector3_{container}"]
+                                + self.fqv[f"inspector4_{container}"]
+                                + self.fqv[f"inspector5_{container}"]
+                            )
+                            / 50
+                            * 10
                         )
-                        / 50
-                        * 10
-                    )
+                    else:
+                        self.manual_results[f"container_{container}"] = self.fqv[
+                            f"container_{container}"
+                        ]
             except (pickle.UnpicklingError, KeyError):
                 pass
         elif fileName.endswith(".xml"):
@@ -619,6 +604,61 @@ class EfficiencyWindow(QMainWindow):
             ax.legend()
 
         self.efficiency_canvas.draw()
+
+
+class CreateFQV(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setGeometry(600, 100, 150, 600)
+        self.setWindowTitle("Create FQV Results")
+        self.manual_results = {}
+        self.fqv_containers = {}
+        self.CreateFQVUI()
+
+    def CreateFQVUI(self):
+        self.fqv_widget = QVBoxLayout()
+
+        table = QTableWidget()
+        table.setRowCount(250)
+        table.setColumnCount(1)
+        table.setHorizontalHeaderLabels(["Manual"])
+
+        for container in range(1, 251):
+            self.fqv_containers[container] = QTableWidgetItem("0")
+            table.setItem(container - 1, 0, self.fqv_containers[container])
+
+        colourCell = ColourCell()
+        table.setItemDelegate(colourCell)
+
+        l1 = QLabel()
+        l1.setText("Create FQV Results")
+        self.save_button = QPushButton("Save", self)
+        self.save_button.clicked.connect(self.save_fqv_results)
+
+        self.close_button = QPushButton("Close", self)
+        self.close_button.clicked.connect(self.close)
+
+        self.fqv_widget.addWidget(l1)
+        self.fqv_widget.addWidget(table)
+        self.fqv_widget.addWidget(self.save_button)
+        self.fqv_widget.addWidget(self.close_button)
+
+        self.setLayout(self.fqv_widget)
+
+    def save_fqv_results(self):
+        for container in range(1, 251):
+            self.manual_results[f"container_{container}"] = int(
+                self.fqv_containers[container].text()
+            )
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save FQV Results",
+            "",
+            "Pickle Files (*.pkl)",
+        )
+
+        if file_path and write_pickle_file(file_path, self.manual_results):
+            self.close()
 
 
 if __name__ == "__main__":
