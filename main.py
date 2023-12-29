@@ -199,14 +199,14 @@ class LoadFQV(QWidget):
         """
         self.openFileDialog()
         self.fqv_widget = QVBoxLayout()
-        l1 = QLabel()
-        self.fqv_widget.addWidget(l1)
+        title_label = QLabel()
+        self.fqv_widget.addWidget(title_label)
 
         self.results_table, self.fqv_containers = setup_results_table(
             self.manual_results, "Manual"
         )
 
-        l1.setText(f"{self.results_title}")
+        title_label.setText(f"{self.results_title}")
         self.close_button = QPushButton("Close", self)
         self.close_button.clicked.connect(self.close)
         button_layout = QVBoxLayout()
@@ -278,14 +278,14 @@ class LoadMachineResults(QWidget):
         """
         self.openFileDialog()
         self.machine_results_widget = QVBoxLayout()
-        l1 = QLabel()
-        self.machine_results_widget.addWidget(l1)
+        title_label = QLabel()
+        self.machine_results_widget.addWidget(title_label)
 
         self.results_table, self.machine_containers = setup_results_table(
             self.machine_results, "Machine"
         )
 
-        l1.setText(f"{self.results_title}")
+        title_label.setText(f"{self.results_title}")
         self.close_button = QPushButton("Close", self)
         self.close_button.clicked.connect(self.close)
         button_layout = QVBoxLayout()
@@ -405,8 +405,8 @@ class LoadManualInspection(QWidget):
         self.manual_inspection_widget = QVBoxLayout()
 
         self.openFileDialog()
-        l1 = QLabel()
-        self.manual_inspection_widget.addWidget(l1)
+        title_label = QLabel()
+        self.manual_inspection_widget.addWidget(title_label)
 
         table = QTableWidget()
         table.setRowCount(CONTAINER_END)
@@ -434,7 +434,7 @@ class LoadManualInspection(QWidget):
                 )
 
         table.setItemDelegate(ColourCell())
-        l1.setText(f"{self.results_title}")
+        title_label.setText(f"{self.results_title}")
         self.close_button = QPushButton("Close", self)
         self.close_button.clicked.connect(self.close)
         button_layout = QVBoxLayout()
@@ -791,8 +791,8 @@ class CreateManualInspection(QWidget):
 
         table.setItemDelegate(ColourCell())
 
-        l1 = QLabel()
-        l1.setText("Create Manual Inspection Data")
+        title_label = QLabel()
+        title_label.setText("Create Manual Inspection Data")
         self.save_button = QPushButton("Save", self)
         self.save_button.clicked.connect(self.save_inspection_results)
 
@@ -802,7 +802,7 @@ class CreateManualInspection(QWidget):
         self.close_button = QPushButton("Close", self)
         self.close_button.clicked.connect(self.close)
 
-        self.inspection_widget.addWidget(l1)
+        self.inspection_widget.addWidget(title_label)
         self.inspection_widget.addWidget(table)
         self.inspection_widget.addWidget(self.save_button)
         self.inspection_widget.addWidget(self.open_button)
