@@ -41,11 +41,15 @@ class MainApp(QWidget):
         """
         Create the main window UI layout.
         """
-        self.create_man_inspect_button = QPushButton(
+        self.create_dummy_man_inspect_button = QPushButton(
             "Create Dummy Inspection Data", self
         )
         self.create_dummy_fqv_button = QPushButton("Create Dummy FQV", self)
+        self.create_man_inspect_button = QPushButton(
+            "Create Manual Inspection Data", self
+        )
         self.create_fqv_button = QPushButton("Create FQV", self)
+        self.load_manual_inspection = QPushButton("Load Manual Inspection Data", self)
         self.load_fqv = QPushButton("Load FQV", self)
         self.load_machine_results = QPushButton("Load Machine Results (Particle)", self)
         self.compare_results = QPushButton("Compare Results", self)
@@ -53,9 +57,11 @@ class MainApp(QWidget):
         self.quit_button = QPushButton("Quit", self)
 
         layout = QVBoxLayout(self)
+        layout.addWidget(self.create_dummy_man_inspect_button)
         layout.addWidget(self.create_man_inspect_button)
         layout.addWidget(self.create_dummy_fqv_button)
         layout.addWidget(self.create_fqv_button)
+        layout.addWidget(self.load_manual_inspection)
         layout.addWidget(self.load_fqv)
         layout.addWidget(self.load_machine_results)
         layout.addWidget(self.compare_results)
@@ -63,13 +69,24 @@ class MainApp(QWidget):
 
         self.setLayout(layout)
         self.create_dummy_fqv_button.clicked.connect(self.dummy_fqv_button)
+        self.create_dummy_man_inspect_button.clicked.connect(
+            self.dummy_man_inspect_button
+        )
         self.create_fqv_button.clicked.connect(self.create_fqv_window)
-        self.create_man_inspect_button.clicked.connect(self.dummy_man_inspect_button)
+        self.create_man_inspect_button.clicked.connect(
+            self.create_manual_inspection_window
+        )
+        self.load_manual_inspection.clicked.connect(self.LoadManualInspection)
         self.load_fqv.clicked.connect(self.LoadFQV)
         self.load_machine_results.clicked.connect(self.LoadMachineResults)
         self.compare_results.clicked.connect(self.CompareResults)
         self.quit_button.clicked.connect(self.close)
         self.show()
+
+    def LoadManualInspection(self):
+        self.manual_inspection_window = LoadManualInspection()
+        if show_confirmation(self, "Show Manual Inspection Data?"):
+            self.manual_inspection_window.show()
 
     def LoadFQV(self):
         self.fqv_window = LoadFQV()
@@ -91,6 +108,10 @@ class MainApp(QWidget):
     def create_fqv_window(self):
         self.create_fqv_window = CreateFQV()
         self.create_fqv_window.show()
+
+    def create_manual_inspection_window(self):
+        self.create_manual_inspection_window = CreateManualInspection()
+        self.create_manual_inspection_window.show()
 
     @pyqtSlot()
     def dummy_fqv_button(self):
@@ -114,18 +135,13 @@ class MainApp(QWidget):
     @pyqtSlot()
     def dummy_man_inspect_button(self):
         inspectors = {}
-        for number_of_inspectors in range(1, 6):
-            for number_of_runs in range(1, 11):
-                inspections = 1
-                number_of_inspections = 251
-                while inspections < number_of_inspections:
-                    results = {
-                        f"inspector{number_of_inspectors}_{number_of_runs}_{inspections}": random.randint(
-                            0, 10
-                        )
-                    }
-                    inspectors.update(results)
-                    inspections += 1
+        for container in range(1, 251):
+            results = {
+                f"container_{container}": [
+                    random.randint(0, 10) for _ in range(5)
+                ]
+            }
+            inspectors.update(results)
 
         self.saveFileDialog()
         if self.fileName != "":
@@ -195,22 +211,14 @@ class LoadFQV(QWidget):
             try:
                 self.fqv = read_pickle_file(fileName)
                 for container in range(1, 251):
-                    if "inspector1_1" in self.fqv:
-                        self.manual_results[f"container_{container}"] = round(
-                            (
-                                self.fqv[f"inspector1_{container}"]
-                                + self.fqv[f"inspector2_{container}"]
-                                + self.fqv[f"inspector3_{container}"]
-                                + self.fqv[f"inspector4_{container}"]
-                                + self.fqv[f"inspector5_{container}"]
-                            )
-                            / 50
-                            * 10
-                        )
-                    else:
-                        self.manual_results[f"container_{container}"] = self.fqv[
-                            f"container_{container}"
-                        ]
+                    key = f"container_{container}"
+                    value = self.fqv.get(key, None)
+                    if value is not None:
+                        if isinstance(value, list):
+                            avg_value = round((sum(value) / 50) * 10)
+                            self.manual_results[key] = avg_value
+                        else:
+                            self.manual_results[key] = value
             except (pickle.UnpicklingError, KeyError):
                 pass
         elif fileName.endswith(".xml"):
@@ -360,6 +368,79 @@ class LoadMachineResults(QWidget):
         return self.machine_results
 
 
+class LoadManualInspection(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setGeometry(600, 100, 500, 600)
+        self.setWindowTitle("Manual Inspection Data")
+        self.manual_inspection_results = {}
+        self.manual_inspection_containers = {}
+        self.LoadManualInspectionUI()
+
+    def LoadManualInspectionUI(self):
+        self.manual_inspection_widget = QVBoxLayout()
+
+        self.openFileDialog()
+        l1 = QLabel()
+        self.manual_inspection_widget.addWidget(l1)
+
+        table = QTableWidget()
+        table.setRowCount(250)
+        table.setColumnCount(5)  # One column for each inspector
+        table.setHorizontalHeaderLabels(
+            ["Inspector 1", "Inspector 2", "Inspector 3", "Inspector 4", "Inspector 5"]
+        )
+
+        for container in range(1, 251):
+            inspector_results = self.manual_inspection_results.get(
+                f"container_{container}", [0, 0, 0, 0, 0]
+            )
+            self.manual_inspection_containers[container] = [
+                QTableWidgetItem(str(result)) for result in inspector_results
+            ]
+
+            for i in range(5):
+                table.setItem(
+                    container - 1, i, self.manual_inspection_containers[container][i]
+                )
+
+        self.manual_inspection_containers[container][i].setFlags(
+            self.manual_inspection_containers[container][i].flags()
+            & ~Qt.ItemFlag.ItemIsEditable
+        )
+
+        table.setItemDelegate(ColourCell())
+        l1.setText(f"{self.results_title}")
+        self.close_button = QPushButton("Close", self)
+        self.close_button.clicked.connect(self.close)
+        button_layout = QVBoxLayout()
+        button_layout.addWidget(self.close_button)
+        self.manual_inspection_widget.addWidget(table)
+        self.manual_inspection_widget.addLayout(button_layout)
+        self.setLayout(self.manual_inspection_widget)
+
+    def openFileDialog(self):
+        fileName, _ = QFileDialog.getOpenFileName(
+            self,
+            "Open Manual Inspection Data",
+            "",
+            "All Files (*);;Pickle (*.pkl);;XML (*.xml)",
+        )
+
+        self.results_title = ""
+        if fileName:
+            self.load_manual_inspection_data(fileName)
+            self.results_title = os.path.basename(fileName)
+
+    def load_manual_inspection_data(self, fileName):
+        self.results_title = os.path.basename(fileName)
+        if fileName.endswith(".pkl"):
+            try:
+                self.manual_inspection_results = read_pickle_file(fileName)
+            except (pickle.UnpicklingError, KeyError):
+                pass
+
+
 class CompareResults(QWidget):
     """
     Class for comparing manual and machine inspection results.
@@ -408,8 +489,7 @@ class CompareResults(QWidget):
             self.manual_containers[f"container_{container}"] = int(manual_item.text())
             self.machine_containers[f"container_{container}"] = int(machine_item.text())
 
-        colourCell = ColourCell()
-        table.setItemDelegate(colourCell)
+        table.setItemDelegate(ColourCell())
         self.show_efficiency_button = QPushButton("Calculate efficiency", self)
         self.show_efficiency_button.clicked.connect(self.show_efficiency)
         self.close_button = QPushButton("Close", self)
@@ -565,6 +645,7 @@ class CreateFQV(QWidget):
     """
     Class for creating FQV results.
     """
+
     def __init__(self):
         super().__init__()
         self.setGeometry(600, 100, 150, 600)
@@ -607,8 +688,7 @@ class CreateFQV(QWidget):
                 container - 1, 0, self.fqv_containers[container]
             )
 
-        colourCell = ColourCell()
-        self.fqv_results_table.setItemDelegate(colourCell)
+        self.fqv_results_table.setItemDelegate(ColourCell())
 
     def save_fqv_results(self):
         for container in range(1, 251):
@@ -623,6 +703,70 @@ class CreateFQV(QWidget):
         )
 
         if file_path and write_pickle_file(file_path, self.manual_results):
+            self.close()
+
+
+class CreateManualInspection(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setGeometry(600, 100, 500, 600)
+        self.setWindowTitle("Create Manual Inspection Data")
+        self.inspection_results = {}
+        self.inspection_containers = {}
+        self.CreateManualInspectionUI()
+
+    def CreateManualInspectionUI(self):
+        self.inspection_widget = QVBoxLayout()
+
+        table = QTableWidget()
+        table.setRowCount(250)
+        table.setColumnCount(5)  # One column for each inspector
+        table.setHorizontalHeaderLabels(
+            ["Inspector 1", "Inspector 2", "Inspector 3", "Inspector 4", "Inspector 5"]
+        )
+
+        for container in range(1, 251):
+            self.inspection_containers[container] = [
+                QTableWidgetItem("0") for _ in range(5)
+            ]
+
+            for i in range(5):
+                table.setItem(
+                    container - 1, i, self.inspection_containers[container][i]
+                )
+
+        table.setItemDelegate(ColourCell())
+
+        l1 = QLabel()
+        l1.setText("Create Manual Inspection Data")
+        self.save_button = QPushButton("Save", self)
+        self.save_button.clicked.connect(self.save_inspection_results)
+
+        self.close_button = QPushButton("Close", self)
+        self.close_button.clicked.connect(self.close)
+
+        self.inspection_widget.addWidget(l1)
+        self.inspection_widget.addWidget(table)
+        self.inspection_widget.addWidget(self.save_button)
+        self.inspection_widget.addWidget(self.close_button)
+
+        self.setLayout(self.inspection_widget)
+
+    def save_inspection_results(self):
+        for container in range(1, 251):
+            inspector_results = [
+                int(self.inspection_containers[container][i].text()) for i in range(5)
+            ]
+            self.inspection_results[f"container_{container}"] = inspector_results
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Manual Inspection Results",
+            "",
+            "Pickle Files (*.pkl)",
+        )
+
+        if file_path and write_pickle_file(file_path, self.inspection_results):
             self.close()
 
 
