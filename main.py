@@ -27,6 +27,10 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 
+CONTAINER_START = 1
+CONTAINER_END = 250
+
+
 class MainApp(QWidget):
     """
     Main application window for the Knapp/FQV Reader.
@@ -146,7 +150,7 @@ class MainApp(QWidget):
     @pyqtSlot()
     def random_fqv_button(self):
         inspectors = {}
-        for container in range(1, 251):
+        for container in range(CONTAINER_START, CONTAINER_END + 1):
             results = {f"container_{container}": random.randint(0, 10)}
             inspectors.update(results)
 
@@ -157,7 +161,7 @@ class MainApp(QWidget):
     @pyqtSlot()
     def random_man_inspect_button(self):
         inspectors = {}
-        for container in range(1, 251):
+        for container in range(CONTAINER_START, CONTAINER_END + 1):
             results = {
                 f"container_{container}": [random.randint(0, 10) for _ in range(5)]
             }
@@ -230,7 +234,7 @@ class LoadFQV(QWidget):
         if fileName.endswith(".pkl"):
             try:
                 self.fqv = read_pickle_file(fileName)
-                for container in range(1, 251):
+                for container in range(CONTAINER_START, CONTAINER_END + 1):
                     key = f"container_{container}"
                     value = self.fqv.get(key, None)
                     if value is not None:
@@ -380,7 +384,7 @@ class LoadMachineResults(QWidget):
                 container_number = 240
                 for type_tag in root.findall("ParticlesInspection/Sample/TotReject"):
                     container_number += 1
-                    if container_number > 250:
+                    if container_number > CONTAINER_END:
                         break
                     self.machine_results[f"container_{container_number}"] = int(
                         type_tag.text
@@ -405,13 +409,13 @@ class LoadManualInspection(QWidget):
         self.manual_inspection_widget.addWidget(l1)
 
         table = QTableWidget()
-        table.setRowCount(250)
+        table.setRowCount(CONTAINER_END)
         table.setColumnCount(5)  # One column for each inspector
         table.setHorizontalHeaderLabels(
             ["Inspector 1", "Inspector 2", "Inspector 3", "Inspector 4", "Inspector 5"]
         )
 
-        for container in range(1, 251):
+        for container in range(CONTAINER_START, CONTAINER_END + 1):
             inspector_results = self.manual_inspection_results.get(
                 f"container_{container}", [0, 0, 0, 0, 0]
             )
@@ -483,11 +487,11 @@ class CompareResults(QWidget):
         self.manual_containers = {}
         self.machine_containers = {}
         table = QTableWidget()
-        table.setRowCount(250)
+        table.setRowCount(CONTAINER_END)
         table.setColumnCount(2)
         table.setHorizontalHeaderLabels(["Manual", "Machine"])
 
-        for container in range(1, 251):
+        for container in range(CONTAINER_START, CONTAINER_END + 1):
             manual_item = QTableWidgetItem(
                 str(self.manual_results.get(f"container_{container}", 0))
             )
@@ -702,11 +706,11 @@ class CreateFQV(QWidget):
 
     def setup_table(self):
         self.fqv_results_table = QTableWidget()
-        self.fqv_results_table.setRowCount(250)
+        self.fqv_results_table.setRowCount(CONTAINER_END)
         self.fqv_results_table.setColumnCount(1)
         self.fqv_results_table.setHorizontalHeaderLabels(["Manual"])
 
-        for container in range(1, 251):
+        for container in range(CONTAINER_START, CONTAINER_END + 1):
             self.fqv_containers[container] = QTableWidgetItem("0")
             self.fqv_results_table.setItem(
                 container - 1, 0, self.fqv_containers[container]
@@ -715,7 +719,7 @@ class CreateFQV(QWidget):
         self.fqv_results_table.setItemDelegate(ColourCell())
 
     def save_fqv_results(self):
-        for container in range(1, 251):
+        for container in range(CONTAINER_START, CONTAINER_END + 1):
             self.manual_results[f"container_{container}"] = int(
                 self.fqv_containers[container].text()
             )
@@ -740,7 +744,7 @@ class CreateFQV(QWidget):
         if fileName:
             if fileName.endswith(".pkl"):
                 pre_made_results = read_pickle_file(fileName)
-                for container in range(1, 251):
+                for container in range(CONTAINER_START, CONTAINER_END + 1):
                     result = pre_made_results.get(f"container_{container}", 0)
                     self.fqv_containers[container].setText(str(result))
             elif fileName.endswith(".xml"):
@@ -749,10 +753,11 @@ class CreateFQV(QWidget):
                     container_number = 0
                     for type_tag in root.findall("Sample/Manual"):
                         container_number += 1
-                        self.fqv_containers[container_number].setText(str(type_tag.text))
+                        self.fqv_containers[container_number].setText(
+                            str(type_tag.text)
+                        )
                 except KeyError:
                     pass
-
 
 
 class CreateManualInspection(QWidget):
@@ -768,13 +773,13 @@ class CreateManualInspection(QWidget):
         self.inspection_widget = QVBoxLayout()
 
         table = QTableWidget()
-        table.setRowCount(250)
+        table.setRowCount(CONTAINER_END)
         table.setColumnCount(5)  # One column for each inspector
         table.setHorizontalHeaderLabels(
             ["Inspector 1", "Inspector 2", "Inspector 3", "Inspector 4", "Inspector 5"]
         )
 
-        for container in range(1, 251):
+        for container in range(CONTAINER_START, CONTAINER_END + 1):
             self.inspection_containers[container] = [
                 QTableWidgetItem("0") for _ in range(5)
             ]
@@ -816,7 +821,7 @@ class CreateManualInspection(QWidget):
         if fileName:
             try:
                 manual_results = read_pickle_file(fileName)
-                for container in range(1, 251):
+                for container in range(CONTAINER_START, CONTAINER_END + 1):
                     inspector_results = manual_results.get(
                         f"container_{container}", [0, 0, 0, 0, 0]
                     )
@@ -828,7 +833,7 @@ class CreateManualInspection(QWidget):
                 pass
 
     def save_inspection_results(self):
-        for container in range(1, 251):
+        for container in range(CONTAINER_START, CONTAINER_END + 1):
             inspector_results = [
                 int(self.inspection_containers[container][i].text()) for i in range(5)
             ]

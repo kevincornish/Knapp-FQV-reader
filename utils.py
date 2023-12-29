@@ -8,6 +8,10 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QBrush, QColor
 import pickle
 
+ACCEPT_THRESHOLD = 3
+GREYZONE_THRESHOLD = 6
+REJECT_THRESHOLD = 7
+
 
 def read_pickle_file(file_path):
     with open(file_path, "rb") as fp:
@@ -36,11 +40,11 @@ class ColourCell(QStyledItemDelegate):
 
         value = int(index.data(Qt.ItemDataRole.DisplayRole))
 
-        if 0 <= value <= 3:
+        if 0 <= value <= ACCEPT_THRESHOLD:
             option.backgroundBrush = QBrush(QColor(0, 150, 0))
-        elif 4 <= value <= 6:
+        elif ACCEPT_THRESHOLD < value <= GREYZONE_THRESHOLD:
             option.backgroundBrush = QBrush(QColor(255, 165, 0))
-        elif value >= 7:
+        elif value >= REJECT_THRESHOLD:
             option.backgroundBrush = QBrush(QColor(255, 0, 0))
 
 
@@ -60,7 +64,7 @@ def setup_results_table(results, result_type):
         containers[container].setFlags(
             containers[container].flags() & ~Qt.ItemFlag.ItemIsEditable
         )
-        if int(containers[container].text()) > 7:
+        if int(containers[container].text()) > REJECT_THRESHOLD:
             containers[container].setData(Qt.ItemDataRole.UserRole, "high_value")
 
     colour_cell = ColourCell()
