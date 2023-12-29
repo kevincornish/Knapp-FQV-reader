@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QTableWidget,
     QTableWidgetItem,
+    QTabWidget,
 )
 from PyQt6.QtCore import Qt, pyqtSlot
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -33,7 +34,7 @@ class MainApp(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.setGeometry(600, 400, 200, 200)
+        self.setGeometry(600, 400, 450, 350)
         self.setWindowTitle("Knapp / FQV Reader")
         self.MainWindowUI()
 
@@ -41,36 +42,27 @@ class MainApp(QWidget):
         """
         Create the main window UI layout.
         """
-        self.create_dummy_man_inspect_button = QPushButton(
-            "Create Dummy Inspection Data", self
-        )
-        self.create_dummy_fqv_button = QPushButton("Create Dummy FQV", self)
-        self.create_man_inspect_button = QPushButton(
-            "Create Manual Inspection Data", self
-        )
-        self.create_fqv_button = QPushButton("Create FQV", self)
-        self.load_manual_inspection = QPushButton("Load Manual Inspection Data", self)
-        self.load_fqv = QPushButton("Load FQV", self)
-        self.load_machine_results = QPushButton("Load Machine Results (Particle)", self)
-        self.compare_results = QPushButton("Compare Results", self)
-        self.compare_results.setEnabled(False)
+        self.main_ui = QTabWidget()
+        self.knapp_tab = QWidget()
+        self.create_data_tab = QWidget()
+        self.manual_inspection_tab = QWidget()
+        self.main_ui.addTab(self.knapp_tab, "Knapp")
+        self.main_ui.addTab(self.create_data_tab, "Create Knapp Data")
+        self.main_ui.addTab(self.manual_inspection_tab, "Manual Inspection")
+        self.setup_knapp_tab_layout()
+        self.setup_create_data_tab_layout()
+        self.setup_manual_inspection_tab_layout()
         self.quit_button = QPushButton("Quit", self)
 
-        layout = QVBoxLayout(self)
-        layout.addWidget(self.create_dummy_man_inspect_button)
-        layout.addWidget(self.create_man_inspect_button)
-        layout.addWidget(self.create_dummy_fqv_button)
-        layout.addWidget(self.create_fqv_button)
-        layout.addWidget(self.load_manual_inspection)
-        layout.addWidget(self.load_fqv)
-        layout.addWidget(self.load_machine_results)
-        layout.addWidget(self.compare_results)
-        layout.addWidget(self.quit_button)
+        main_layout = QVBoxLayout(self)
+        main_layout.addWidget(self.main_ui)
+        main_layout.addWidget(self.quit_button)
 
-        self.setLayout(layout)
-        self.create_dummy_fqv_button.clicked.connect(self.dummy_fqv_button)
-        self.create_dummy_man_inspect_button.clicked.connect(
-            self.dummy_man_inspect_button
+        self.setLayout(main_layout)
+
+        self.create_random_fqv_button.clicked.connect(self.random_fqv_button)
+        self.create_random_man_inspect_button.clicked.connect(
+            self.random_man_inspect_button
         )
         self.create_fqv_button.clicked.connect(self.create_fqv_window)
         self.create_man_inspect_button.clicked.connect(
@@ -82,6 +74,44 @@ class MainApp(QWidget):
         self.compare_results.clicked.connect(self.CompareResults)
         self.quit_button.clicked.connect(self.close)
         self.show()
+
+    def setup_knapp_tab_layout(self):
+        """
+        Set up the layout for the Main tab.
+        """
+        self.load_fqv = QPushButton("Load FQV (Manual)", self)
+        self.load_machine_results = QPushButton("Load FQA (Machine)", self)
+        self.compare_results = QPushButton("Compare Results", self)
+        self.compare_results.setEnabled(False)
+
+        main_layout = QVBoxLayout(self.knapp_tab)
+        main_layout.addWidget(self.load_fqv)
+        main_layout.addWidget(self.load_machine_results)
+        main_layout.addWidget(self.compare_results)
+
+    def setup_create_data_tab_layout(self):
+        """
+        Set up the layout for the create data tab.
+        """
+        self.create_fqv_button = QPushButton("Create FQV", self)
+        self.create_random_fqv_button = QPushButton("Create Random FQV", self)
+
+        create_data_layout = QVBoxLayout(self.create_data_tab)
+        create_data_layout.addWidget(self.create_fqv_button)
+        create_data_layout.addWidget(self.create_random_fqv_button)
+
+    def setup_manual_inspection_tab_layout(self):
+        self.create_man_inspect_button = QPushButton(
+            "Create Manual Inspection Data", self
+        )
+        self.create_random_man_inspect_button = QPushButton(
+            "Create Random Inspection Data", self
+        )
+        self.load_manual_inspection = QPushButton("Load Manual Inspection Data", self)
+        manual_inspection_tab_layout = QVBoxLayout(self.manual_inspection_tab)
+        manual_inspection_tab_layout.addWidget(self.create_man_inspect_button)
+        manual_inspection_tab_layout.addWidget(self.create_random_man_inspect_button)
+        manual_inspection_tab_layout.addWidget(self.load_manual_inspection)
 
     def LoadManualInspection(self):
         self.manual_inspection_window = LoadManualInspection()
@@ -114,32 +144,22 @@ class MainApp(QWidget):
         self.create_manual_inspection_window.show()
 
     @pyqtSlot()
-    def dummy_fqv_button(self):
+    def random_fqv_button(self):
         inspectors = {}
-        for number_of_inspectors in range(1, 6):
-            inspections = 1
-            number_of_inspections = 251
-            while inspections < number_of_inspections:
-                results = {
-                    f"inspector{number_of_inspectors}_{inspections}": random.randint(
-                        0, 10
-                    )
-                }
-                inspectors.update(results)
-                inspections += 1
+        for container in range(1, 251):
+            results = {f"container_{container}": random.randint(0, 10)}
+            inspectors.update(results)
 
         self.saveFileDialog()
         if self.fileName != "":
             write_pickle_file(self.fileName, inspectors)
 
     @pyqtSlot()
-    def dummy_man_inspect_button(self):
+    def random_man_inspect_button(self):
         inspectors = {}
         for container in range(1, 251):
             results = {
-                f"container_{container}": [
-                    random.randint(0, 10) for _ in range(5)
-                ]
+                f"container_{container}": [random.randint(0, 10) for _ in range(5)]
             }
             inspectors.update(results)
 
