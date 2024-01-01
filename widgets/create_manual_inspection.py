@@ -1,3 +1,5 @@
+import csv
+import os
 import pickle
 from utils import (
     write_pickle_file,
@@ -13,6 +15,7 @@ from PyQt6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
 )
+from PyQt6.QtCore import Qt
 from constants import CONTAINER_START, CONTAINER_END
 
 
@@ -31,10 +34,10 @@ class CreateManualInspection(QWidget):
         """
         self.inspection_widget = QVBoxLayout()
 
-        table = QTableWidget()
-        table.setRowCount(CONTAINER_END)
-        table.setColumnCount(5)  # One column for each inspector
-        table.setHorizontalHeaderLabels(
+        self.table = QTableWidget()
+        self.table.setRowCount(CONTAINER_END)
+        self.table.setColumnCount(5)  # One column for each inspector
+        self.table.setHorizontalHeaderLabels(
             ["Inspector 1", "Inspector 2", "Inspector 3", "Inspector 4", "Inspector 5"]
         )
 
@@ -44,11 +47,11 @@ class CreateManualInspection(QWidget):
             ]
 
             for i in range(5):
-                table.setItem(
+                self.table.setItem(
                     container - 1, i, self.inspection_containers[container][i]
                 )
 
-        table.setItemDelegate(ColourCell())
+        self.table.setItemDelegate(ColourCell())
 
         title_label = QLabel()
         title_label.setText("Create Manual Inspection Data")
@@ -56,31 +59,39 @@ class CreateManualInspection(QWidget):
         self.save_button.clicked.connect(self.save_inspection_results)
 
         self.open_button = QPushButton("Open", self)
-        self.open_button.clicked.connect(self.open_file)
+        self.open_button.clicked.connect(self.openFileDialog)
 
         self.close_button = QPushButton("Close", self)
         self.close_button.clicked.connect(self.close)
 
         self.inspection_widget.addWidget(title_label)
-        self.inspection_widget.addWidget(table)
+        self.inspection_widget.addWidget(self.table)
         self.inspection_widget.addWidget(self.save_button)
         self.inspection_widget.addWidget(self.open_button)
         self.inspection_widget.addWidget(self.close_button)
 
         self.setLayout(self.inspection_widget)
 
-    def open_file(self):
+    def openFileDialog(self):
         """
-        Open a file dialog to load existing manual inspection data.
+        Open a file dialog to choose the manual inspection data file.
         """
         fileName, _ = QFileDialog.getOpenFileName(
             self,
             "Open Manual Inspection Data",
             "",
-            "Pickle Files (*.pkl)",
+            "All Files (*);;Pickle (*.pkl);;XML (*.xml)",
         )
 
         if fileName:
+            self.open_file(fileName)
+
+    def open_file(self, fileName):
+        """
+        Open a file dialog to load existing manual inspection data.
+        """
+
+        if fileName.endswith(".pkl"):
             try:
                 manual_results = read_pickle_file(fileName)
                 for container in range(CONTAINER_START, CONTAINER_END + 1):
@@ -93,6 +104,24 @@ class CreateManualInspection(QWidget):
                         )
             except (pickle.UnpicklingError, KeyError):
                 pass
+        elif fileName.endswith(".csv"):
+            self.table.clearContents()
+            self.table.setRowCount(0)
+            self.manual_inspection_results = {}
+            with open(fileName, "rt") as csvfile:
+                reader = csv.reader(csvfile)
+                header = next(reader)
+                self.table.setColumnCount(len(header))
+                self.table.setHorizontalHeaderLabels(header)
+                for row, values in enumerate(reader):
+                    self.table.insertRow(row)
+                    container_key = f"container_{row + 1}"
+                    inspector_results = [int(value) for value in values]
+                    self.manual_inspection_results[container_key] = inspector_results
+                    for column, value in enumerate(values):
+                        item = QTableWidgetItem(value)
+                        self.table.setItem(row, column, item)
+                        item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
     def save_inspection_results(self):
         """
@@ -100,7 +129,7 @@ class CreateManualInspection(QWidget):
         """
         for container in range(CONTAINER_START, CONTAINER_END + 1):
             inspector_results = [
-                int(self.inspection_containers[container][i].text()) for i in range(5)
+                int(self.table.item(container - 1, i).text()) for i in range(5)
             ]
             self.inspection_results[f"container_{container}"] = inspector_results
 
