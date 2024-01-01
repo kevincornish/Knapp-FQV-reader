@@ -9,23 +9,46 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QBrush, QColor
 import pickle
-
-ACCEPT_THRESHOLD = 3
-GREYZONE_THRESHOLD = 6
-REJECT_THRESHOLD = 7
+from constants import ACCEPT_THRESHOLD, GREYZONE_THRESHOLD, REJECT_THRESHOLD
 
 
 def read_pickle_file(file_path):
+    """
+    Read data from a pickle file.
+
+    Parameters:
+        file_path (str): The path to the pickle file.
+
+    Returns:
+        object: The data read from the pickle file.
+    """
     with open(file_path, "rb") as fp:
         return pickle.load(fp)
 
 
 def write_pickle_file(file_path, data):
+    """
+    Write data to a pickle file.
+
+    Parameters:
+        file_path (str): The path to the pickle file.
+        data (object): The data to be written to the file.
+    """
     with open(file_path, "wb") as fp:
         pickle.dump(data, fp)
 
 
 def show_confirmation(parent, message):
+    """
+    Display a confirmation dialog.
+
+    Parameters:
+        parent: The parent widget.
+        message (str): The message to be displayed in the dialog.
+
+    Returns:
+        bool: True if the user clicks 'Yes', False otherwise.
+    """
     confirmation = QMessageBox.question(
         parent,
         "Confirmation",
@@ -38,10 +61,18 @@ def show_confirmation(parent, message):
 
 class ColourCell(QStyledItemDelegate):
     def initStyleOption(self, option, index):
+        """
+        Initialize the style options for a table cell based on its value.
+
+        Parameters:
+            option: Style options for the cell.
+            index: Index of the cell in the model.
+        """
         super(ColourCell, self).initStyleOption(option, index)
 
         value = int(index.data(Qt.ItemDataRole.DisplayRole))
 
+        # Colour cells based on the threshold values
         if 0 <= value <= ACCEPT_THRESHOLD:
             option.backgroundBrush = QBrush(QColor(0, 150, 0))
         elif ACCEPT_THRESHOLD < value <= GREYZONE_THRESHOLD:
@@ -51,6 +82,16 @@ class ColourCell(QStyledItemDelegate):
 
 
 def setup_results_table(results, result_type):
+    """
+    Set up a QTableWidget with colour coded cells.
+
+    Parameters:
+        results (dict): Dictionary containing result values.
+        result_type (str): Type of result.
+
+    Returns:
+        tuple: QTableWidget and a dictionary of QTableWidgetItem objects.
+    """
     results_table = QTableWidget()
     results_table.setRowCount(250)
     results_table.setColumnCount(1)
@@ -76,6 +117,12 @@ def setup_results_table(results, result_type):
 
 
 def export_table_to_csv(table: QTableWidget):
+    """
+    Export the contents of a QTableWidget to a CSV file.
+
+    Parameters:
+        table (QTableWidget): The table to be exported.
+    """
     path, ok = QFileDialog.getSaveFileName(None, "Save CSV", "", "CSV(*.csv)")
     if ok:
         columns = range(table.columnCount())
