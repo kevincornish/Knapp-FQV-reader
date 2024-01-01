@@ -60,6 +60,9 @@ def show_confirmation(parent, message):
 
 
 class ColourCell(QStyledItemDelegate):
+    def __init__(self):
+        super().__init__()
+
     def initStyleOption(self, option, index):
         """
         Initialize the style options for a table cell based on its value.
@@ -68,17 +71,19 @@ class ColourCell(QStyledItemDelegate):
             option: Style options for the cell.
             index: Index of the cell in the model.
         """
-        super(ColourCell, self).initStyleOption(option, index)
+        super().initStyleOption(option, index)
 
-        value = int(index.data(Qt.ItemDataRole.DisplayRole))
-
-        # Colour cells based on the threshold values
-        if 0 <= value <= ACCEPT_THRESHOLD:
+        try:
+            value = int(index.data(Qt.ItemDataRole.DisplayRole))
+            # Colour cells based on the threshold values
+            if 0 <= value <= ACCEPT_THRESHOLD:
+                option.backgroundBrush = QBrush(QColor(0, 150, 0))
+            elif ACCEPT_THRESHOLD < value <= GREYZONE_THRESHOLD:
+                option.backgroundBrush = QBrush(QColor(255, 165, 0))
+            elif value >= REJECT_THRESHOLD:
+                option.backgroundBrush = QBrush(QColor(255, 0, 0))
+        except ValueError:
             option.backgroundBrush = QBrush(QColor(0, 150, 0))
-        elif ACCEPT_THRESHOLD < value <= GREYZONE_THRESHOLD:
-            option.backgroundBrush = QBrush(QColor(255, 165, 0))
-        elif value >= REJECT_THRESHOLD:
-            option.backgroundBrush = QBrush(QColor(255, 0, 0))
 
 
 def setup_results_table(results, result_type):
