@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QWidget,
     QTableWidget,
     QTableWidgetItem,
+    QFileDialog,
 )
 from PyQt6.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -110,8 +111,16 @@ class EfficiencyWindow(QMainWindow):
         self.machine_containers = machine_results or {}
 
         self.efficiency_canvas = FigureCanvas(Figure(figsize=(8, 6), dpi=100))
+
+        self.save_chart_button = QPushButton("Save Chart", self)
+        self.save_chart_button.clicked.connect(self.save_chart)
+        self.close_button = QPushButton("Close", self)
+        self.close_button.clicked.connect(self.close)
+
         self.central_layout = QVBoxLayout(self.central_widget)
         self.central_layout.addWidget(self.efficiency_canvas)
+        self.central_layout.addWidget(self.save_chart_button)
+        self.central_layout.addWidget(self.close_button)
 
         self.plot_bar_chart()
 
@@ -220,3 +229,13 @@ class EfficiencyWindow(QMainWindow):
             ax.legend()
 
         self.efficiency_canvas.draw()
+
+    def save_chart(self):
+        file_dialog = QFileDialog()
+        file_dialog.setDefaultSuffix("png")
+        file_name, _ = file_dialog.getSaveFileName(
+            self, "Save Chart as Image", "", "Images (*.png);;All Files (*)"
+        )
+
+        if file_name:
+            self.efficiency_canvas.figure.savefig(file_name)
