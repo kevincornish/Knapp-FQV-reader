@@ -1,3 +1,4 @@
+import csv
 import os
 import pickle
 import random
@@ -8,6 +9,7 @@ from utils import (
     write_pickle_file,
     read_pickle_file,
     setup_results_table,
+    export_table_to_csv,
     ColourCell,
 )
 from PyQt6.QtWidgets import (
@@ -256,6 +258,16 @@ class LoadFQV(QWidget):
                     )
             except KeyError:
                 pass
+        elif fileName.endswith(".csv"):
+            self.manual_results = {}  # Clear existing results
+            with open(fileName, "rt") as csvfile:
+                reader = csv.reader(csvfile)
+                next(reader)
+                for row, values in enumerate(reader):
+                    container_key = f"container_{row + 1}"
+                    inspector_results = [int(value) for value in values]
+                    avg_value = round((sum(inspector_results) / 5))
+                    self.manual_results[container_key] = avg_value
         return self.manual_results
 
 
@@ -270,6 +282,7 @@ class LoadMachineResults(QWidget):
         self.setWindowTitle("Machine Results")
         self.machine_results = {}
         self.machine_containers = {}
+        self.results_title = ""
         self.LoadMachineResultsUI()
 
     def LoadMachineResultsUI(self):
@@ -301,7 +314,6 @@ class LoadMachineResults(QWidget):
             "",
             "All Files (*);;Pickle (*.pkl);;XML (*.xml)",
         )
-        self.results_title = ""
         if fileNames:
             for fileName in fileNames:
                 self.load_results(fileName)
@@ -399,6 +411,8 @@ class LoadManualInspection(QWidget):
         self.setWindowTitle("Manual Inspection Data")
         self.manual_inspection_results = {}
         self.manual_inspection_containers = {}
+        self.table = QTableWidget()
+        self.results_title = ""
         self.LoadManualInspectionUI()
 
     def LoadManualInspectionUI(self):
@@ -407,11 +421,9 @@ class LoadManualInspection(QWidget):
         self.openFileDialog()
         title_label = QLabel()
         self.manual_inspection_widget.addWidget(title_label)
-
-        table = QTableWidget()
-        table.setRowCount(CONTAINER_END)
-        table.setColumnCount(5)  # One column for each inspector
-        table.setHorizontalHeaderLabels(
+        self.table.setRowCount(CONTAINER_END - CONTAINER_START + 1)
+        self.table.setColumnCount(5)  # One column for each inspector
+        self.table.setHorizontalHeaderLabels(
             ["Inspector 1", "Inspector 2", "Inspector 3", "Inspector 4", "Inspector 5"]
         )
 
@@ -424,7 +436,7 @@ class LoadManualInspection(QWidget):
             ]
 
             for i in range(5):
-                table.setItem(
+                self.table.setItem(
                     container - 1, i, self.manual_inspection_containers[container][i]
                 )
 
@@ -433,14 +445,18 @@ class LoadManualInspection(QWidget):
                     & ~Qt.ItemFlag.ItemIsEditable
                 )
 
-        table.setItemDelegate(ColourCell())
+        self.table.setItemDelegate(ColourCell())
         title_label.setText(f"{self.results_title}")
+        self.export_button = QPushButton("Export (csv)")
         self.close_button = QPushButton("Close", self)
         self.close_button.clicked.connect(self.close)
+        self.export_button.clicked.connect(self.export_manual_inspection_data)
         button_layout = QVBoxLayout()
+        button_layout.addWidget(self.export_button)
         button_layout.addWidget(self.close_button)
-        self.manual_inspection_widget.addWidget(table)
+        self.manual_inspection_widget.addWidget(self.table)
         self.manual_inspection_widget.addLayout(button_layout)
+        self.table.resizeColumnsToContents()
         self.setLayout(self.manual_inspection_widget)
 
     def openFileDialog(self):
@@ -451,7 +467,6 @@ class LoadManualInspection(QWidget):
             "All Files (*);;Pickle (*.pkl);;XML (*.xml)",
         )
 
-        self.results_title = ""
         if fileName:
             self.load_manual_inspection_data(fileName)
             self.results_title = os.path.basename(fileName)
@@ -461,8 +476,32 @@ class LoadManualInspection(QWidget):
         if fileName.endswith(".pkl"):
             try:
                 self.manual_inspection_results = read_pickle_file(fileName)
+                for container_key, values in self.manual_inspection_results.items():
+                    if not isinstance(values, list):
+                        self.manual_inspection_results[container_key] = [values] * 5
             except (pickle.UnpicklingError, KeyError):
                 pass
+        elif fileName.endswith(".csv"):
+            self.table.clearContents()
+            self.table.setRowCount(0)
+            self.manual_inspection_results = {}
+            with open(fileName, "rt") as csvfile:
+                reader = csv.reader(csvfile)
+                header = next(reader)
+                self.table.setColumnCount(len(header))
+                self.table.setHorizontalHeaderLabels(header)
+                for row, values in enumerate(reader):
+                    self.table.insertRow(row)
+                    container_key = f"container_{row + 1}"
+                    inspector_results = [int(value) for value in values]
+                    self.manual_inspection_results[container_key] = inspector_results
+                    for column, value in enumerate(values):
+                        item = QTableWidgetItem(value)
+                        self.table.setItem(row, column, item)
+                        item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+
+    def export_manual_inspection_data(self):
+        export_table_to_csv(self.table)
 
 
 class CompareResults(QWidget):
@@ -486,10 +525,10 @@ class CompareResults(QWidget):
         self.setWindowTitle("FQV vs Machine Results")
         self.manual_containers = {}
         self.machine_containers = {}
-        table = QTableWidget()
-        table.setRowCount(CONTAINER_END)
-        table.setColumnCount(2)
-        table.setHorizontalHeaderLabels(["Manual", "Machine"])
+        self.table = QTableWidget()
+        self.table.setRowCount(CONTAINER_END)
+        self.table.setColumnCount(2)
+        self.table.setHorizontalHeaderLabels(["Manual", "Machine"])
 
         for container in range(CONTAINER_START, CONTAINER_END + 1):
             manual_item = QTableWidgetItem(
@@ -502,8 +541,8 @@ class CompareResults(QWidget):
             manual_item.setFlags(manual_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             machine_item.setFlags(machine_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
-            table.setItem(container - 1, 0, manual_item)
-            table.setItem(container - 1, 1, machine_item)
+            self.table.setItem(container - 1, 0, manual_item)
+            self.table.setItem(container - 1, 1, machine_item)
 
             if int(manual_item.text()) > 7:
                 manual_item.setData(Qt.ItemDataRole.UserRole, "high_value")
@@ -513,15 +552,18 @@ class CompareResults(QWidget):
             self.manual_containers[f"container_{container}"] = int(manual_item.text())
             self.machine_containers[f"container_{container}"] = int(machine_item.text())
 
-        table.setItemDelegate(ColourCell())
+        self.table.setItemDelegate(ColourCell())
         self.show_efficiency_button = QPushButton("Calculate efficiency", self)
         self.show_efficiency_button.clicked.connect(self.show_efficiency)
+        self.export_button = QPushButton("Export (csv)", self)
+        self.export_button.clicked.connect(self.export_compare_results_data)
         self.close_button = QPushButton("Close", self)
         self.close_button.clicked.connect(self.close)
         button_layout = QVBoxLayout()
         button_layout.addWidget(self.show_efficiency_button)
+        button_layout.addWidget(self.export_button)
         button_layout.addWidget(self.close_button)
-        self.compare_results_widget.addWidget(table)
+        self.compare_results_widget.addWidget(self.table)
         self.compare_results_widget.addLayout(button_layout)
         self.setLayout(self.compare_results_widget)
 
@@ -534,6 +576,9 @@ class CompareResults(QWidget):
                 self.manual_containers, self.machine_containers
             )
             self.efficiency_window.show()
+
+    def export_compare_results_data(self):
+        export_table_to_csv(self.table)
 
 
 class EfficiencyWindow(QMainWindow):

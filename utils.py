@@ -1,8 +1,10 @@
+import csv
 from PyQt6.QtWidgets import (
     QMessageBox,
     QTableWidget,
     QTableWidgetItem,
     QStyledItemDelegate,
+    QFileDialog,
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QBrush, QColor
@@ -71,3 +73,15 @@ def setup_results_table(results, result_type):
     results_table.setItemDelegate(colour_cell)
 
     return results_table, containers
+
+
+def export_table_to_csv(table: QTableWidget):
+    path, ok = QFileDialog.getSaveFileName(None, "Save CSV", "", "CSV(*.csv)")
+    if ok:
+        columns = range(table.columnCount())
+        header = [table.horizontalHeaderItem(column).text() for column in columns]
+        with open(path, "w") as csvfile:
+            writer = csv.writer(csvfile, dialect="excel", lineterminator="\n")
+            writer.writerow(header)
+            for row in range(table.rowCount()):
+                writer.writerow(table.item(row, column).text() for column in columns)
