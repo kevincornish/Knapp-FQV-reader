@@ -3,6 +3,7 @@ from utils import (
     write_pickle_file,
     read_pickle_file,
     ColourCell,
+    handle_item_changed,
 )
 from PyQt6.QtWidgets import (
     QPushButton,
@@ -71,6 +72,7 @@ class CreateFQV(QWidget):
             )
 
         self.fqv_results_table.setItemDelegate(ColourCell())
+        self.fqv_results_table.itemChanged.connect(handle_item_changed)
 
     def save_fqv_results(self):
         """

@@ -5,6 +5,7 @@ from utils import (
     write_pickle_file,
     read_pickle_file,
     ColourCell,
+    handle_item_changed,
 )
 from PyQt6.QtWidgets import (
     QPushButton,
@@ -50,7 +51,7 @@ class CreateManualInspection(QWidget):
                 self.table.setItem(
                     container - 1, i, self.inspection_containers[container][i]
                 )
-
+        self.table.itemChanged.connect(handle_item_changed)
         self.table.setItemDelegate(ColourCell())
 
         title_label = QLabel()
@@ -90,7 +91,6 @@ class CreateManualInspection(QWidget):
         """
         Open a file dialog to load existing manual inspection data.
         """
-
         if fileName.endswith(".pkl"):
             try:
                 manual_results = read_pickle_file(fileName)
@@ -99,9 +99,9 @@ class CreateManualInspection(QWidget):
                         f"container_{container}", [0, 0, 0, 0, 0]
                     )
                     for i in range(5):
-                        self.inspection_containers[container][i].setText(
-                            str(inspector_results[i])
-                        )
+                        item = QTableWidgetItem(str(inspector_results[i]))
+                        self.table.setItem(container - 1, i, item)
+                        item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             except (pickle.UnpicklingError, KeyError):
                 pass
         elif fileName.endswith(".csv"):
@@ -116,12 +116,20 @@ class CreateManualInspection(QWidget):
                 for row, values in enumerate(reader):
                     self.table.insertRow(row)
                     container_key = f"container_{row + 1}"
-                    inspector_results = [int(value) for value in values]
+                    inspector_results = []
+                    for value in values:
+                        try:
+                            inspector_results.append(int(value))
+                        except ValueError:
+                            inspector_results.append(0)
+
                     self.manual_inspection_results[container_key] = inspector_results
                     for column, value in enumerate(values):
-                        item = QTableWidgetItem(value)
+                        item = QTableWidgetItem(str(value))
                         self.table.setItem(row, column, item)
                         item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.table.itemChanged.disconnect(handle_item_changed)
+            self.table.itemChanged.connect(handle_item_changed)
 
     def save_inspection_results(self):
         """

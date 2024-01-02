@@ -116,6 +116,7 @@ def setup_results_table(results, result_type):
             containers[container].setData(Qt.ItemDataRole.UserRole, "high_value")
 
     colour_cell = ColourCell()
+    results_table.itemChanged.connect(handle_item_changed)
     results_table.setItemDelegate(colour_cell)
 
     return results_table, containers
@@ -137,3 +138,24 @@ def export_table_to_csv(table: QTableWidget):
             writer.writerow(header)
             for row in range(table.rowCount()):
                 writer.writerow(table.item(row, column).text() for column in columns)
+
+
+def reset_value(value):
+    """
+    Reset the value to 0 if it's higher than 10 or not an integer.
+    """
+    try:
+        int_value = int(value)
+        if int_value > 10:
+            return "0"
+    except (ValueError, TypeError):
+        return "0"
+    return value
+
+
+def handle_item_changed(item):
+    """
+    Resets the value to 0 if it's higher than 10 on the itemChanged signal.
+    """
+    if isinstance(item, QTableWidgetItem) and item.column() < 5:
+        item.setText(reset_value(item.text()))
