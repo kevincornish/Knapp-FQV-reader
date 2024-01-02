@@ -22,7 +22,7 @@ class LoadMachineResults(QWidget):
         super().__init__()
         self.setGeometry(600, 100, 150, 600)
         self.setWindowTitle("Machine Results")
-        self.machine_results = {}
+        self.machine_results = {f"container_{i}": -1 for i in range(1, CONTAINER_END + 1)}
         self.machine_containers = {}
         self.results_title = ""
         self.LoadMachineResultsUI()
