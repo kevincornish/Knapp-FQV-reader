@@ -28,6 +28,7 @@ class ContainerInput(QDialog):
 
         self.label = QLabel("Enter the number of containers:")
         self.container_input = QSpinBox(self)
+        self.container_input.setMaximum(250)
 
         self.buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
