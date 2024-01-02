@@ -109,20 +109,31 @@ class LoadManualInspection(QWidget):
             self.table.clearContents()
             self.table.setRowCount(0)
             self.manual_inspection_results = {}
+
             with open(fileName, "rt") as csvfile:
                 reader = csv.reader(csvfile)
                 header = next(reader)
                 self.table.setColumnCount(len(header))
                 self.table.setHorizontalHeaderLabels(header)
+
                 for row, values in enumerate(reader):
                     self.table.insertRow(row)
                     container_key = f"container_{row + 1}"
-                    inspector_results = [int(value) for value in values]
+
+                    inspector_results = []
+                    for value in values:
+                        try:
+                            inspector_results.append(int(value))
+                        except ValueError:
+                            inspector_results.append(0)
+
                     self.manual_inspection_results[container_key] = inspector_results
+
                     for column, value in enumerate(values):
-                        item = QTableWidgetItem(value)
+                        item = QTableWidgetItem(str(value))
                         self.table.setItem(row, column, item)
                         item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+
 
     def export_manual_inspection_data(self):
         """

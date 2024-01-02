@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
 from widgets.compare_results import CompareResults
 from constants import CONTAINER_START, CONTAINER_END
 
+
 class LoadFQV(QWidget):
     """
     Class for loading FQV results.
@@ -108,7 +109,13 @@ class LoadFQV(QWidget):
                 next(reader)
                 for row, values in enumerate(reader):
                     container_key = f"container_{row + 1}"
-                    inspector_results = [int(value) for value in values]
+                    inspector_results = []
+                    for value in values:
+                        try:
+                            inspector_results.append(int(value))
+                        except ValueError:
+                            inspector_results.append(0)
+
                     avg_value = round((sum(inspector_results) / 5))
                     self.manual_results[container_key] = avg_value
         return self.manual_results
