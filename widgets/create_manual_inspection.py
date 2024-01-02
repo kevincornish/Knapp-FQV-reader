@@ -1,5 +1,4 @@
 import csv
-import os
 import pickle
 from utils import (
     write_pickle_file,
@@ -101,7 +100,6 @@ class CreateManualInspection(QWidget):
                     for i in range(5):
                         item = QTableWidgetItem(str(inspector_results[i]))
                         self.table.setItem(container - 1, i, item)
-                        item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             except (pickle.UnpicklingError, KeyError):
                 pass
         elif fileName.endswith(".csv"):
@@ -127,7 +125,6 @@ class CreateManualInspection(QWidget):
                     for column, value in enumerate(values):
                         item = QTableWidgetItem(str(value))
                         self.table.setItem(row, column, item)
-                        item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             self.table.itemChanged.disconnect(handle_item_changed)
             self.table.itemChanged.connect(handle_item_changed)
 
