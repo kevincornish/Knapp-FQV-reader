@@ -1,5 +1,6 @@
 import csv
 from PyQt6.QtWidgets import (
+    QApplication,
     QMessageBox,
     QTableWidget,
     QTableWidgetItem,
@@ -159,3 +160,47 @@ def handle_item_changed(item):
     """
     if isinstance(item, QTableWidgetItem) and item.column() < 5:
         item.setText(reset_value(item.text()))
+
+
+class TableWidget(QTableWidget):
+    """
+    Custom QTableWidget class to add paste functionality.
+
+    Attributes:
+        rows (int): Number of rows in the table.
+        columns (int): Number of columns in the table.
+
+    Methods:
+        keyPressEvent(event): Overrides the keyPressEvent to handle Ctrl+V for pasting data.
+    """
+
+    def __init__(self, rows, columns, parent=None):
+        super().__init__(rows, columns)
+
+    def keyPressEvent(self, event):
+        """
+        Overrides the keyPressEvent to handle Ctrl+V for pasting data into selected cells.
+
+        Args:
+            event (QKeyEvent): The key event.
+        """
+        if event.key() == Qt.Key.Key_V and (
+            event.modifiers() & Qt.KeyboardModifier.ControlModifier
+        ):
+            selection = self.selectedIndexes()
+
+            if selection:
+                row_anchor = selection[0].row()
+                column_anchor = selection[0].column()
+
+                clipboard = QApplication.clipboard()
+
+                rows = clipboard.text().split("\n")
+                for indx_row, row in enumerate(rows):
+                    values = row.split("\t")
+                    for indx_col, value in enumerate(values):
+                        item = QTableWidgetItem(value)
+                        self.setItem(
+                            row_anchor + indx_row, column_anchor + indx_col, item
+                        )
+            super().keyPressEvent(event)

@@ -4,6 +4,7 @@ from utils import (
     read_pickle_file,
     ColourCell,
     handle_item_changed,
+    TableWidget,
 )
 from PyQt6.QtWidgets import (
     QPushButton,
@@ -11,7 +12,6 @@ from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
     QFileDialog,
-    QTableWidget,
     QTableWidgetItem,
     QDialog,
     QDialogButtonBox,
@@ -94,9 +94,7 @@ class CreateFQV(QWidget):
         """
         Setup the table for displaying FQV results.
         """
-        self.fqv_results_table = QTableWidget()
-        self.fqv_results_table.setRowCount(self.num_containers)
-        self.fqv_results_table.setColumnCount(1)
+        self.fqv_results_table = TableWidget(self.num_containers, 1)
         self.fqv_results_table.setHorizontalHeaderLabels(["Manual"])
 
         for container in range(1, self.num_containers + 1):

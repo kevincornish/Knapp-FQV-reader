@@ -5,6 +5,7 @@ from utils import (
     read_pickle_file,
     ColourCell,
     handle_item_changed,
+    TableWidget,
 )
 from PyQt6.QtWidgets import (
     QPushButton,
@@ -12,10 +13,8 @@ from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
     QFileDialog,
-    QTableWidget,
     QTableWidgetItem,
 )
-from PyQt6.QtCore import Qt
 from constants import CONTAINER_START, CONTAINER_END
 
 
@@ -34,9 +33,7 @@ class CreateManualInspection(QWidget):
         """
         self.inspection_widget = QVBoxLayout()
 
-        self.table = QTableWidget()
-        self.table.setRowCount(CONTAINER_END)
-        self.table.setColumnCount(5)  # One column for each inspector
+        self.table = TableWidget(CONTAINER_END, 5)  # One column for each inspector
         self.table.setHorizontalHeaderLabels(
             ["Inspector 1", "Inspector 2", "Inspector 3", "Inspector 4", "Inspector 5"]
         )
