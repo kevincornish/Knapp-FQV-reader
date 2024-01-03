@@ -206,7 +206,16 @@ class EfficiencyWindow(QMainWindow):
             text_machine_vs_manual = (
                 f"Machine vs Manual Efficiency: {efficacy_machine_to_manual:.2f}%"
             )
-
+            num_containers_inspected = len(self.manual_containers)
+            ax.annotate(
+                f"Containers Inspected: {num_containers_inspected}",
+                xy=(0.5, 0.85),
+                xycoords="axes fraction",
+                ha="center",
+                va="center",
+                fontsize=10,
+                color="black",
+            )
             ax.annotate(
                 text_manual_vs_machine,
                 xy=(0.5, 0.95),
